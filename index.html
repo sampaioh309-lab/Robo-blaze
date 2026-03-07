@@ -4,13 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SISTEMA I.A - Double Blaze</title>
-
 <style>
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0}
 body{background:#020617;font-family:Arial,sans-serif;color:#e5e7eb;overflow:hidden}
 canvas{position:fixed;inset:0;z-index:0}
 #statsText{position:fixed;top:5px;left:6px;font-size:10px;color:#00ff88;z-index:999;}
+#loginScreen{position:relative;z-index:2;max-width:420px;margin:50px auto;padding:10px;background:rgba(0,0,0,0.8);border-radius:10px;text-align:center;}
+#loginScreen input{display:block;width:80%;margin:6px auto;padding:6px;border-radius:6px;border:none;}
+#loginScreen button{padding:6px 12px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-weight:bold;cursor:pointer;}
+#adminPanel{position:relative;z-index:2;max-width:420px;margin:10px auto;padding:10px;background:rgba(0,0,0,0.8);border-radius:10px;text-align:center;}
+#adminPanel input{display:block;width:70%;margin:6px auto;padding:6px;border-radius:6px;border:none;}
+#adminPanel button{padding:6px 12px;border:none;border-radius:8px;background:#3b82f6;color:#fff;font-weight:bold;cursor:pointer;margin-top:4px;}
+#listaUsuarios li{margin:4px 0;font-size:12px;color:#fff;}
 #app{position:relative;z-index:1;max-width:420px;height:100vh;margin:auto;padding:6px;display:flex;flex-direction:column;gap:6px;text-align:center;}
 .titulo{font-size:20px;font-weight:900;color:#ff0033}
 .versao{font-size:13px;font-weight:900;color:#ff0033;margin-top:-4px}
@@ -23,10 +29,9 @@ canvas{position:fixed;inset:0;z-index:0}
 #linha{display:flex;gap:4px;overflow-x:auto;font-size:16px;padding:4px;}
 #linha::-webkit-scrollbar{display:none}
 #botoes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
-button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px;}
-.red{background:#7f1d1d;color:#fff}
-.black{background:#020617;color:#fff;border:1px solid #555}
-.white{background:#fff;color:#020617}
+button.red{background:#7f1d1d;color:#fff}
+button.black{background:#020617;color:#fff;border:1px solid #555}
+button.white{background:#fff;color:#020617}
 #result{min-height:40px;font-size:13px;font-weight:bold;text-align:center;}
 #modalBranco{position:fixed;bottom:10px;right:10px;background:rgba(2,6,23,0.95);border:1px solid #facc15;box-shadow:0 0 8px #facc15;padding:6px 8px;border-radius:8px;width:120px;font-size:11px;text-align:center;z-index:99;display:none;}
 #modalBranco h3{margin:0 0 4px 0;font-size:10px;color:#facc15;}
@@ -35,15 +40,35 @@ button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px
 .green-branco-chamativo{font-size:32px;font-weight:900;color:#00ffcc;text-shadow:0 0 15px #00ffcc,0 0 30px #00ffcc,0 0 50px #00ffcc;}
 </style>
 </head>
-
 <body>
+
 <div id="statsText">Sinais: <span id="totalSinais">0</span> | Assert: <span id="percentual">0%</span></div>
 <canvas id="matrix"></canvas>
 
-<div id="app">
+<!-- LOGIN ADMIN -->
+<div id="loginScreen">
+  <div class="titulo">LOGIN ADMIN</div>
+  <input type="text" id="loginUser" placeholder="Usuário">
+  <input type="password" id="loginPass" placeholder="Senha">
+  <button onclick="entrar()">Entrar</button>
+</div>
+
+<!-- PAINEL ADMIN -->
+<div id="adminPanel" style="display:none;">
+  <div class="titulo">ADMIN - CADASTRO CLIENTE</div>
+  <input type="text" id="novoUsuario" placeholder="Novo usuário">
+  <input type="text" id="novaSenha" placeholder="Senha">
+  <button onclick="cadastrarCliente()">Cadastrar</button>
+
+  <h3>Usuários cadastrados:</h3>
+  <ul id="listaUsuarios"></ul>
+</div>
+
+<!-- ROBÔ -->
+<div id="app" style="display:none;">
   <div>
     <div class="titulo">SISTEMA I.A</div>
-    <div class="versao">V:9.60 MOBILE</div>
+    <div class="versao">V:10.0 MOBILE</div>
     <div id="hora" class="blue-neon">🕒 --:--:--</div>
   </div>
   <div id="placar">
@@ -63,6 +88,52 @@ button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px
 <div id="modalBranco"></div>
 
 <script>
+/* ===== LOGIN ===== */
+const logins=[{user:"admin",senha:"123456"}]; // login admin inicial
+const linkRobo = "https://sampaioh309-lab.github.io/Robo-blaze/";
+
+function entrar(){
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value.trim();
+  const ok = logins.find(l => l.user===user && l.senha===pass);
+  if(ok){
+    alert("✅ Bem-vindo "+ok.user);
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
+    document.getElementById("adminPanel").style.display="block";
+    atualizarListaUsuarios();
+  } else {
+    alert("❌ Usuário ou senha incorretos");
+  }
+}
+
+/* ===== CADASTRO CLIENTE ===== */
+function cadastrarCliente(){
+  const user=document.getElementById("novoUsuario").value.trim();
+  const pass=document.getElementById("novaSenha").value.trim();
+  if(!user||!pass){alert("Preencha usuário e senha");return;}
+  logins.push({user,senha:pass});
+  atualizarListaUsuarios();
+  document.getElementById("novoUsuario").value="";
+  document.getElementById("novaSenha").value="";
+}
+
+function atualizarListaUsuarios(){
+  const ul=document.getElementById("listaUsuarios");
+  ul.innerHTML="";
+  logins.forEach(l=>{
+    const li=document.createElement("li");
+    li.innerHTML=`${l.user} / ${l.senha} <button onclick="compartilhar('${l.user}','${l.senha}')">Compartilhar</button>`;
+    ul.appendChild(li);
+  });
+}
+
+function compartilhar(user,senha){
+  const txt = `Login: ${user}\nSenha: ${senha}\nLink: ${linkRobo}`;
+  navigator.clipboard.writeText(txt);
+  alert("✅ Copiado para área de transferência:\n"+txt);
+}
+
 /* ===== MATRIX ===== */
 const canvas=document.getElementById("matrix");
 const ctx=canvas.getContext("2d");
@@ -83,7 +154,7 @@ function drawMatrix(){
 }
 setInterval(drawMatrix,50);
 
-/* ===== SISTEMA ===== */
+/* ===== SISTEMA ROBÔ ===== */
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
 const greensEl=document.getElementById("greens");
@@ -97,7 +168,6 @@ let totalSinais=0;
 let textoSinal="";
 let possiveisBrancos=[];
 
-/* ===== CLIQUE ===== */
 function add(c){
   seq.push(c);
   const el=document.createElement("span");
@@ -105,7 +175,6 @@ function add(c){
   linha.appendChild(el); linha.scrollLeft=linha.scrollWidth;
 
   if(c==="W"){
-    // Green no branco sempre
     verificarGreenBranco();
     if(sinal){
       greens++; brancos++; atualizar(); atualizarStats();
@@ -119,7 +188,6 @@ function add(c){
   sinal ? validar(c) : analisar();
 }
 
-/* ===== ESTRATÉGIAS CORES ===== */
 function analisar(){
   let ult3=seq.slice(-3).join("");
   const padroes=[
@@ -152,7 +220,6 @@ function validar(c){
   }
 }
 
-/* ===== POSSÍVEIS BRANCOS ===== */
 function gerarPossiveisBrancos(){
   let base=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
   base.setMinutes(base.getMinutes()+5);
@@ -171,7 +238,6 @@ function gerarPossiveisBrancos(){
 
 function minhaHora(n){ return n<0?0:n; }
 
-/* ===== GREEN BRANCO ===== */
 function verificarGreenBranco(){
   const agora=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
   const minutoAtual = agora.getHours()*60 + agora.getMinutes();
@@ -188,7 +254,6 @@ function verificarGreenBranco(){
   return false;
 }
 
-/* ===== AUX ===== */
 function atualizar(){greensEl.innerText=greens; lossesEl.innerText=losses; brancosEl.innerText=brancos;}
 function atualizarStats(){document.getElementById("totalSinais").innerText=totalSinais; let p=totalSinais>0?((greens/totalSinais)*100).toFixed(1):0; document.getElementById("percentual").innerText=p+"%";}
 function resetar(){setTimeout(()=>{sinal=null; gale=0; textoSinal=""; result.innerHTML="⏸️ AGUARDAR";},1200);}
