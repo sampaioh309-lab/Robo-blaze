@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -46,44 +46,72 @@ button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px
     <div class="versao">V:9.60 MOBILE</div>
     <div id="hora" class="blue-neon">🕒 --:--:--</div>
   </div>
+
   <div id="placar">
     <span class="green-neon">GREEN <b id="greens">0</b></span>
     <span class="red-neon">LOSS <b id="losses">0</b></span>
     <span class="white-neon">BRANCO <b id="brancos">0</b></span>
   </div>
+
   <div id="linha"></div>
+
   <div id="botoes">
     <button class="red" onclick="add('R')">🔴</button>
     <button class="black" onclick="add('B')">⚫</button>
     <button class="white" onclick="add('W')">⚪</button>
   </div>
+
   <div id="result">⏸️ AGUARDAR</div>
 </div>
 
 <div id="modalBranco"></div>
 
 <script>
-/* ===== MATRIX ===== */
+
+/* MATRIX */
+
 const canvas=document.getElementById("matrix");
 const ctx=canvas.getContext("2d");
-function resize(){canvas.width=innerWidth; canvas.height=innerHeight;}
-resize(); window.onresize=resize;
+
+function resize(){
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+}
+
+resize();
+window.onresize=resize;
+
 const letters="01アイウエオ";
 const fontSize=14;
 let drops=Array(Math.floor(innerWidth/fontSize)).fill(1);
+
 function drawMatrix(){
-  ctx.fillStyle="rgba(2,6,23,0.35)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#ff0033"; ctx.font=fontSize+"px monospace";
-  for(let i=0;i<drops.length;i++){
-    const text=letters[Math.floor(Math.random()*letters.length)];
-    ctx.fillText(text,i*fontSize,drops[i]*fontSize);
-    if(drops[i]*fontSize>canvas.height && Math.random()>0.975) drops[i]=0;
-    drops[i]++;
-  }
+
+ctx.fillStyle="rgba(2,6,23,0.35)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="#ff0033";
+ctx.font=fontSize+"px monospace";
+
+for(let i=0;i<drops.length;i++){
+
+const text=letters[Math.floor(Math.random()*letters.length)];
+
+ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+
+if(drops[i]*fontSize>canvas.height && Math.random()>0.975) drops[i]=0;
+
+drops[i]++;
+
 }
+
+}
+
 setInterval(drawMatrix,50);
 
-/* ===== SISTEMA ===== */
+
+/* SISTEMA */
+
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
 const greensEl=document.getElementById("greens");
@@ -91,110 +119,256 @@ const lossesEl=document.getElementById("losses");
 const brancosEl=document.getElementById("brancos");
 const modalBranco=document.getElementById("modalBranco");
 
-let seq=[], sinal=null, gale=0;
-let greens=0, losses=0, brancos=0;
+let seq=[];
+let sinal=null;
+let gale=0;
+
+let greens=0;
+let losses=0;
+let brancos=0;
+
 let totalSinais=0;
+
 let textoSinal="";
 let possiveisBrancos=[];
 
-/* ===== CLIQUE ===== */
+
+/* CLIQUE */
+
 function add(c){
-  seq.push(c);
-  const el=document.createElement("span");
-  el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
-  linha.appendChild(el); linha.scrollLeft=linha.scrollWidth;
 
-  if(c==="W"){
-    // Green no branco sempre
-    verificarGreenBranco();
-    if(sinal){
-      greens++; brancos++; atualizar(); atualizarStats();
-      result.innerHTML="<div class='green-branco-chamativo'>⚪🟢 GREEN BRANCO (PROTEÇÃO)</div>";
-      resetar();
-    }
-    gerarPossiveisBrancos();
-    return;
-  }
+seq.push(c);
 
-  sinal ? validar(c) : analisar();
+const el=document.createElement("span");
+el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
+
+linha.appendChild(el);
+linha.scrollLeft=linha.scrollWidth;
+
+if(c==="W"){
+
+verificarGreenBranco();
+
+if(sinal){
+
+greens++;
+brancos++;
+
+atualizar();
+atualizarStats();
+
+result.innerHTML="<div class='green-branco-chamativo'>⚪🟢 GREEN BRANCO (PROTEÇÃO)</div>";
+
+resetar();
+
 }
 
-/* ===== ESTRATÉGIAS CORES ===== */
+gerarPossiveisBrancos();
+
+return;
+
+}
+
+sinal ? validar(c) : analisar();
+
+}
+
+
+/* NOVA ANÁLISE COM 5 CORES */
+
 function analisar(){
-  let ult3=seq.slice(-3).join("");
-  const padroes=[
-    {p:"RRB",s:"R",inv:false},
-    {p:"RBR",s:"R",inv:true},
-    {p:"BRR",s:"B",inv:false},
-    {p:"BBR",s:"B",inv:true},
-    {p:"BRB",s:"B",inv:false},
-    {p:"RBB",s:"R",inv:true}
-  ];
-  for(let p of padroes){
-    if(ult3===p.p){
-      sinal=p.inv?(p.s==="R"?"B":"R"):p.s;
-      totalSinais++; atualizarStats();
-      textoSinal=`📡 SINAL I.A<br>Apostar no ${sinal==="R"?"🔴":"⚫"}<br>♻️ Até G1<br>⚪ Proteção Branco`;
-      result.innerHTML=textoSinal;
-      return;
-    }
-  }
+
+let ult5 = seq.slice(-5).join("");
+
+const padroes=[
+
+{p:"RBBRB",s:"R"},
+{p:"RBBBB",s:"B"},
+{p:"BRRRR",s:"B"},
+{p:"BRBRR",s:"R"},
+{p:"BBBRR",s:"B"},
+{p:"BBBBR",s:"R"},
+{p:"RRBBB",s:"B"},
+{p:"BBRRB",s:"B"}
+
+];
+
+for(let p of padroes){
+
+if(ult5===p.p){
+
+sinal=p.s;
+
+totalSinais++;
+atualizarStats();
+
+textoSinal=`📡 SINAL I.A<br>Apostar no ${sinal==="R"?"🔴":"⚫"}<br>♻️ Até G1<br>⚪ Proteção Branco`;
+
+result.innerHTML=textoSinal;
+
+return;
+
 }
+
+}
+
+}
+
+
+/* VALIDAÇÃO */
 
 function validar(c){
-  if(c===sinal){
-    greens++; atualizar(); atualizarStats();
-    result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>";
-    resetar();
-  }else{
-    if(gale===0){ gale=1; result.innerHTML=textoSinal+"<br>♻️ ENTRAR G1"; }
-    else{ losses++; atualizar(); atualizarStats(); result.innerHTML="❌ LOSS"; resetar(); }
-  }
+
+if(c===sinal){
+
+greens++;
+
+atualizar();
+atualizarStats();
+
+result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>";
+
+resetar();
+
+}else{
+
+if(gale===0){
+
+gale=1;
+
+result.innerHTML=textoSinal+"<br>♻️ ENTRAR G1";
+
+}else{
+
+losses++;
+
+atualizar();
+atualizarStats();
+
+result.innerHTML="❌ LOSS";
+
+resetar();
+
 }
 
-/* ===== POSSÍVEIS BRANCOS ===== */
+}
+
+}
+
+
+/* POSSÍVEIS BRANCOS */
+
 function gerarPossiveisBrancos(){
-  let base=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
-  base.setMinutes(base.getMinutes()+5);
-  possiveisBrancos=[];
-  let html="<h3>⚪ POSSÍVEIS</h3>";
-  for(let i=0;i<4;i++){
-    if(i>0) base.setMinutes(base.getMinutes()+3);
-    let hora=Number(base.getHours());
-    let minuto=Number(base.getMinutes());
-    possiveisBrancos.push({hora:minhaHora(hora), minuto:minhaHora(minuto)});
-    html+=`<p>${hora.toString().padStart(2,"0")}:${minuto.toString().padStart(2,"0")}</p>`;
-  }
-  modalBranco.innerHTML=html;
-  modalBranco.style.display="block";
+
+let base=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
+
+base.setMinutes(base.getMinutes()+5);
+
+possiveisBrancos=[];
+
+let html="<h3>⚪ POSSÍVEIS</h3>";
+
+for(let i=0;i<4;i++){
+
+if(i>0) base.setMinutes(base.getMinutes()+3);
+
+let hora=Number(base.getHours());
+let minuto=Number(base.getMinutes());
+
+possiveisBrancos.push({hora:hora, minuto:minuto});
+
+html+=`<p>${hora.toString().padStart(2,"0")}:${minuto.toString().padStart(2,"0")}</p>`;
+
 }
 
-function minhaHora(n){ return n<0?0:n; }
+modalBranco.innerHTML=html;
+modalBranco.style.display="block";
 
-/* ===== GREEN BRANCO ===== */
+}
+
+
+/* GREEN BRANCO */
+
 function verificarGreenBranco(){
-  const agora=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
-  const minutoAtual = agora.getHours()*60 + agora.getMinutes();
-  for(let b of possiveisBrancos){
-    const centro = b.hora*60 + b.minuto;
-    if(Math.abs(minutoAtual - centro) <= 1){
-      greens++; brancos++; atualizar(); atualizarStats();
-      result.innerHTML="<div class='green-branco-chamativo'>⚪🟢 GREEN BRANCO</div>";
-      possiveisBrancos=[];
-      gerarPossiveisBrancos();
-      return true;
-    }
-  }
-  return false;
+
+const agora=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
+
+const minutoAtual = agora.getHours()*60 + agora.getMinutes();
+
+for(let b of possiveisBrancos){
+
+const centro = b.hora*60 + b.minuto;
+
+if(Math.abs(minutoAtual - centro) <= 1){
+
+greens++;
+brancos++;
+
+atualizar();
+atualizarStats();
+
+result.innerHTML="<div class='green-branco-chamativo'>⚪🟢 GREEN BRANCO</div>";
+
+possiveisBrancos=[];
+
+gerarPossiveisBrancos();
+
+return true;
+
 }
 
-/* ===== AUX ===== */
-function atualizar(){greensEl.innerText=greens; lossesEl.innerText=losses; brancosEl.innerText=brancos;}
-function atualizarStats(){document.getElementById("totalSinais").innerText=totalSinais; let p=totalSinais>0?((greens/totalSinais)*100).toFixed(1):0; document.getElementById("percentual").innerText=p+"%";}
-function resetar(){setTimeout(()=>{sinal=null; gale=0; textoSinal=""; result.innerHTML="⏸️ AGUARDAR";},1200);}
-function atualizarHora(){const b=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"})); document.getElementById("hora").innerText=`🕒 ${b.toLocaleTimeString("pt-BR")} (Brasília)`;}
-setInterval(atualizarHora,1000); atualizarHora();
-</script>
-</body>
-</html> 
+}
 
+return false;
+
+}
+
+
+/* AUX */
+
+function atualizar(){
+
+greensEl.innerText=greens;
+lossesEl.innerText=losses;
+brancosEl.innerText=brancos;
+
+}
+
+function atualizarStats(){
+
+document.getElementById("totalSinais").innerText=totalSinais;
+
+let p=totalSinais>0?((greens/totalSinais)*100).toFixed(1):0;
+
+document.getElementById("percentual").innerText=p+"%";
+
+}
+
+function resetar(){
+
+setTimeout(()=>{
+
+sinal=null;
+gale=0;
+textoSinal="";
+result.innerHTML="⏸️ AGUARDAR";
+
+},1200);
+
+}
+
+function atualizarHora(){
+
+const b=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}));
+
+document.getElementById("hora").innerText=`🕒 ${b.toLocaleTimeString("pt-BR")} (Brasília)`;
+
+}
+
+setInterval(atualizarHora,1000);
+atualizarHora();
+
+</script>
+
+</body>
+</html>
