@@ -174,7 +174,7 @@ sinal ? validar(c) : analisar();
 }
 
 
-/* NOVA ANÁLISE COM 5 CORES */
+/* ANÁLISE */
 
 function analisar(){
 
@@ -368,7 +368,44 @@ document.getElementById("hora").innerText=`🕒 ${b.toLocaleTimeString("pt-BR")}
 setInterval(atualizarHora,1000);
 atualizarHora();
 
+
+/* 🔥 API BLAZE AUTOMÁTICA */
+
+let ultimoId = null;
+
+async function puxarBlaze(){
+
+    try{
+
+        let res = await fetch("https://blaze.com/api/roulette_games/recent");
+        let data = await res.json();
+
+        if(!data || data.length === 0) return;
+
+        let ultimo = data[0];
+
+        if(ultimo.id === ultimoId) return;
+
+        ultimoId = ultimo.id;
+
+        let cor;
+
+        if(ultimo.color === 1) cor = "R";
+        else if(ultimo.color === 2) cor = "B";
+        else cor = "W";
+
+        add(cor);
+
+    }catch(e){
+        console.log("Erro API:", e);
+    }
+
+}
+
+// ⏱️ roda sozinho
+setInterval(puxarBlaze, 5000);
+
 </script>
 
 </body>
-</html>
+  </html>
