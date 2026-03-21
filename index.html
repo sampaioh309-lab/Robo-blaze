@@ -68,9 +68,148 @@ button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px
 
 <script>
 
-/* (TODO SEU SISTEMA ORIGINAL — NÃO ALTERADO) */
+/* ====== SEU SISTEMA (INALTERADO) ====== */
 
-/* 🔥 API BLAZE COM PROXY (FUNCIONA NO CELULAR) */
+const linha=document.getElementById("linha");
+const result=document.getElementById("result");
+const greensEl=document.getElementById("greens");
+const lossesEl=document.getElementById("losses");
+const brancosEl=document.getElementById("brancos");
+const modalBranco=document.getElementById("modalBranco");
+
+let seq=[];
+let sinal=null;
+let gale=0;
+
+let greens=0;
+let losses=0;
+let brancos=0;
+
+let totalSinais=0;
+
+let textoSinal="";
+let possiveisBrancos=[];
+
+function add(c){
+
+seq.push(c);
+
+const el=document.createElement("span");
+el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
+
+linha.appendChild(el);
+linha.scrollLeft=linha.scrollWidth;
+
+if(c==="W"){
+
+verificarGreenBranco();
+
+if(sinal){
+
+greens++;
+brancos++;
+
+atualizar();
+atualizarStats();
+
+result.innerHTML="<div class='green-branco-chamativo'>⚪🟢 GREEN BRANCO (PROTEÇÃO)</div>";
+
+resetar();
+
+}
+
+gerarPossiveisBrancos();
+return;
+
+}
+
+sinal ? validar(c) : analisar();
+
+}
+
+function analisar(){
+
+let ult5 = seq.slice(-5).join("");
+
+const padroes=[
+{p:"RBBRB",s:"R"},
+{p:"RBBBB",s:"B"},
+{p:"BRRRR",s:"B"},
+{p:"BRBRR",s:"R"},
+{p:"BBBRR",s:"B"},
+{p:"BBBBR",s:"R"},
+{p:"RRBBB",s:"B"},
+{p:"BBRRB",s:"B"}
+];
+
+for(let p of padroes){
+
+if(ult5===p.p){
+
+sinal=p.s;
+totalSinais++;
+atualizarStats();
+
+textoSinal=`📡 SINAL I.A<br>Apostar no ${sinal==="R"?"🔴":"⚫"}<br>♻️ Até G1<br>⚪ Proteção Branco`;
+
+result.innerHTML=textoSinal;
+return;
+
+}
+
+}
+
+}
+
+function validar(c){
+
+if(c===sinal){
+
+greens++;
+atualizar();
+atualizarStats();
+result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>";
+resetar();
+
+}else{
+
+if(gale===0){
+gale=1;
+result.innerHTML=textoSinal+"<br>♻️ ENTRAR G1";
+}else{
+losses++;
+atualizar();
+atualizarStats();
+result.innerHTML="❌ LOSS";
+resetar();
+}
+
+}
+
+}
+
+function atualizar(){
+greensEl.innerText=greens;
+lossesEl.innerText=losses;
+brancosEl.innerText=brancos;
+}
+
+function atualizarStats(){
+document.getElementById("totalSinais").innerText=totalSinais;
+let p=totalSinais>0?((greens/totalSinais)*100).toFixed(1):0;
+document.getElementById("percentual").innerText=p+"%";
+}
+
+function resetar(){
+setTimeout(()=>{
+sinal=null;
+gale=0;
+textoSinal="";
+result.innerHTML="⏸️ AGUARDAR";
+},1200);
+}
+
+/* ====== API FUNCIONANDO ====== */
 
 let ultimoId = null;
 
@@ -78,7 +217,7 @@ async function puxarBlaze(){
 
     try{
 
-        let res = await fetch("https://api.allorigins.win/raw?url=https://blaze.com/api/roulette_games/recent");
+        let res = await fetch("https://api.codetabs.com/v1/proxy?quest=https://blaze.com/api/roulette_games/recent");
         let data = await res.json();
 
         if(!data || data.length === 0) return;
@@ -95,6 +234,8 @@ async function puxarBlaze(){
         else if(ultimo.color === 2) cor = "B";
         else cor = "W";
 
+        console.log("Novo resultado:", cor);
+
         add(cor);
 
     }catch(e){
@@ -103,10 +244,10 @@ async function puxarBlaze(){
 
 }
 
-// roda automático
+// 🔥 roda automático
 setInterval(puxarBlaze, 4000);
 
 </script>
 
 </body>
-</html>
+      </html>
