@@ -9,35 +9,89 @@
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0}
 body{background:#020617;font-family:Arial,sans-serif;color:#e5e7eb;overflow:hidden}
+
 canvas{position:fixed;inset:0;z-index:0}
+
 #statsText{position:fixed;top:5px;left:6px;font-size:10px;color:#00ff88;z-index:999;}
-#app{position:relative;z-index:1;max-width:420px;height:100vh;margin:auto;padding:6px;display:flex;flex-direction:column;gap:6px;text-align:center;}
+
+#app{
+position:relative;
+z-index:1;
+max-width:420px;
+height:100vh;
+margin:auto;
+padding:6px;
+display:flex;
+flex-direction:column;
+gap:6px;
+text-align:center;
+}
+
 .titulo{font-size:20px;font-weight:900;color:#ff0033}
 .versao{font-size:13px;font-weight:900;color:#ff0033;margin-top:-4px}
 .blue-neon{text-shadow:0 0 6px #3b82f6}
-#hora{font-size:12px}
-#placar{display:flex;justify-content:space-between;font-size:11px;}
+
+#hora{font-size:14px}
+
+#placar{display:flex;justify-content:space-between;font-size:12px;}
 .green-neon{color:#22c55e}
 .red-neon{color:#ef4444}
 .white-neon{color:#facc15}
-#linha{display:flex;gap:4px;overflow-x:auto;font-size:16px;padding:4px;}
+
+#linha{
+display:flex;
+gap:4px;
+overflow-x:auto;
+font-size:18px;
+padding:4px;
+}
 #linha::-webkit-scrollbar{display:none}
-#botoes{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
-button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px;}
+
+#botoes{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:6px;
+}
+
+button{
+padding:10px;
+font-size:16px;
+font-weight:bold;
+border:none;
+border-radius:10px;
+}
+
 .red{background:#7f1d1d;color:#fff}
 .black{background:#020617;color:#fff;border:1px solid #555}
 .white{background:#fff;color:#020617}
-#result{min-height:40px;font-size:13px;font-weight:bold;text-align:center;}
-#modalBranco{position:fixed;bottom:10px;right:10px;background:rgba(2,6,23,0.95);border:1px solid #facc15;box-shadow:0 0 8px #facc15;padding:6px 8px;border-radius:8px;width:120px;font-size:11px;text-align:center;z-index:99;display:none;}
-#modalBranco h3{margin:0 0 4px 0;font-size:10px;color:#facc15;}
-#modalBranco p{margin:2px 0;font-size:12px;font-weight:bold;color:#ffffff;}
-.green-chamativo{font-size:32px;font-weight:900;color:#00ff55;text-shadow:0 0 15px #00ff55,0 0 30px #00ff55,0 0 50px #00ff55;}
-.green-branco-chamativo{font-size:32px;font-weight:900;color:#00ffcc;text-shadow:0 0 15px #00ffcc,0 0 30px #00ffcc,0 0 50px #00ffcc;}
+
+#result{
+min-height:50px;
+font-size:15px;
+font-weight:bold;
+text-align:center;
+}
+
+.green-chamativo{
+font-size:32px;
+font-weight:900;
+color:#00ff55;
+text-shadow:0 0 15px #00ff55,0 0 30px #00ff55;
+}
+
+.green-branco-chamativo{
+font-size:32px;
+font-weight:900;
+color:#00ffcc;
+text-shadow:0 0 15px #00ffcc,0 0 30px #00ffcc;
+}
 </style>
 </head>
 
 <body>
+
 <div id="statsText">Sinais: <span id="totalSinais">0</span> | Assert: <span id="percentual">0%</span></div>
+
 <canvas id="matrix"></canvas>
 
 <div id="app">
@@ -64,18 +118,62 @@ button{padding:6px;font-size:11px;font-weight:bold;border:none;border-radius:8px
   <div id="result">⏸️ AGUARDAR</div>
 </div>
 
-<div id="modalBranco"></div>
-
 <script>
 
-/* ====== SEU SISTEMA (INALTERADO) ====== */
+/* ================= MATRIX ================= */
+
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+}
+resize();
+window.onresize = resize;
+
+const letters = "01アイウエオ";
+const fontSize = 14;
+let drops = Array(Math.floor(window.innerWidth / fontSize)).fill(1);
+
+function drawMatrix(){
+ctx.fillStyle = "rgba(2,6,23,0.35)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle = "#ff0033";
+ctx.font = fontSize + "px monospace";
+
+for(let i=0;i<drops.length;i++){
+let text = letters[Math.floor(Math.random()*letters.length)];
+ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+
+if(drops[i]*fontSize > canvas.height && Math.random()>0.975){
+drops[i]=0;
+}
+drops[i]++;
+}
+}
+setInterval(drawMatrix,50);
+
+
+/* ================= HORA BRASIL ================= */
+
+function atualizarHora(){
+const agora = new Date().toLocaleString("pt-BR", {
+timeZone: "America/Sao_Paulo"
+});
+
+document.getElementById("hora").innerText = "🕒 " + agora + " (Brasília)";
+}
+
+setInterval(atualizarHora,1000);
+atualizarHora();
+
+
+/* ================= SISTEMA ================= */
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
-const greensEl=document.getElementById("greens");
-const lossesEl=document.getElementById("losses");
-const brancosEl=document.getElementById("brancos");
-const modalBranco=document.getElementById("modalBranco");
 
 let seq=[];
 let sinal=null;
@@ -84,11 +182,7 @@ let gale=0;
 let greens=0;
 let losses=0;
 let brancos=0;
-
 let totalSinais=0;
-
-let textoSinal="";
-let possiveisBrancos=[];
 
 function add(c){
 
@@ -99,29 +193,6 @@ el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
 
 linha.appendChild(el);
 linha.scrollLeft=linha.scrollWidth;
-
-if(c==="W"){
-
-verificarGreenBranco();
-
-if(sinal){
-
-greens++;
-brancos++;
-
-atualizar();
-atualizarStats();
-
-result.innerHTML="<div class='green-branco-chamativo'>⚪🟢 GREEN BRANCO (PROTEÇÃO)</div>";
-
-resetar();
-
-}
-
-gerarPossiveisBrancos();
-return;
-
-}
 
 sinal ? validar(c) : analisar();
 
@@ -148,11 +219,11 @@ if(ult5===p.p){
 
 sinal=p.s;
 totalSinais++;
-atualizarStats();
 
-textoSinal=`📡 SINAL I.A<br>Apostar no ${sinal==="R"?"🔴":"⚫"}<br>♻️ Até G1<br>⚪ Proteção Branco`;
+document.getElementById("totalSinais").innerText=totalSinais;
 
-result.innerHTML=textoSinal;
+result.innerHTML=`📡 Apostar no ${sinal==="R"?"🔴":"⚫"} (G1 + Branco)`;
+
 return;
 
 }
@@ -166,20 +237,17 @@ function validar(c){
 if(c===sinal){
 
 greens++;
-atualizar();
-atualizarStats();
 result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>";
+
 resetar();
 
 }else{
 
 if(gale===0){
 gale=1;
-result.innerHTML=textoSinal+"<br>♻️ ENTRAR G1";
+result.innerHTML="♻️ G1";
 }else{
 losses++;
-atualizar();
-atualizarStats();
 result.innerHTML="❌ LOSS";
 resetar();
 }
@@ -188,66 +256,59 @@ resetar();
 
 }
 
-function atualizar(){
-greensEl.innerText=greens;
-lossesEl.innerText=losses;
-brancosEl.innerText=brancos;
-}
-
-function atualizarStats(){
-document.getElementById("totalSinais").innerText=totalSinais;
-let p=totalSinais>0?((greens/totalSinais)*100).toFixed(1):0;
-document.getElementById("percentual").innerText=p+"%";
-}
-
 function resetar(){
 setTimeout(()=>{
 sinal=null;
 gale=0;
-textoSinal="";
 result.innerHTML="⏸️ AGUARDAR";
 },1200);
 }
 
-/* ====== API FUNCIONANDO ====== */
+
+/* ================= API AUTOMÁTICA ================= */
 
 let ultimoId = null;
 
 async function puxarBlaze(){
 
-    try{
+const urls = [
+"https://api.codetabs.com/v1/proxy?quest=https://blaze.com/api/roulette_games/recent",
+"https://api.allorigins.win/raw?url=https://blaze.com/api/roulette_games/recent"
+];
 
-        let res = await fetch("https://api.codetabs.com/v1/proxy?quest=https://blaze.com/api/roulette_games/recent");
-        let data = await res.json();
+for(let url of urls){
 
-        if(!data || data.length === 0) return;
+try{
 
-        let ultimo = data[0];
+let res = await fetch(url);
+let data = await res.json();
 
-        if(ultimo.id === ultimoId) return;
+if(!data || data.length === 0) continue;
 
-        ultimoId = ultimo.id;
+let ultimo = data[0];
 
-        let cor;
+if(ultimo.id === ultimoId) return;
 
-        if(ultimo.color === 1) cor = "R";
-        else if(ultimo.color === 2) cor = "B";
-        else cor = "W";
+ultimoId = ultimo.id;
 
-        console.log("Novo resultado:", cor);
+let cor;
 
-        add(cor);
+if(ultimo.color === 1) cor = "R";
+else if(ultimo.color === 2) cor = "B";
+else cor = "W";
 
-    }catch(e){
-        console.log("Erro API:", e);
-    }
+add(cor);
+return;
+
+}catch(e){}
 
 }
 
-// 🔥 roda automático
-setInterval(puxarBlaze, 4000);
+}
+
+setInterval(puxarBlaze, 3000);
 
 </script>
 
 </body>
-      </html>
+</html>
