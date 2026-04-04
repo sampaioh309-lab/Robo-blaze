@@ -80,7 +80,8 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 
 let seq=[], sinal=null, gale=0;
 let greens=0, losses=0, brancos=0;
-let ultimoId = null;
+
+let ultimoId=null, ultimaCor=null, tentando=false;
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
@@ -192,33 +193,41 @@ result.innerHTML="⏸️ AGUARDAR";
 }
 
 // ===============================
-// 🔥 MULTI API SYSTEM
+// 🔥 PROXY SYSTEM PRO
 // ===============================
 
-const APIS = [
-"https://blaze.com/api/roulette_games/recent",
-"https://api.blaze.com/api/roulette_games/recent",
-"https://blaze.bet.br/api/roulette_games/recent"
+const API = "https://blaze.com/api/roulette_games/recent";
+
+const PROXIES = [
+url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+url => `https://thingproxy.freeboard.io/fetch/${url}`
 ];
 
 async function buscarResultado(){
 
-for(let url of APIS){
+if(tentando) return;
+tentando = true;
+
+for(let proxy of PROXIES){
 
 try{
-const res = await fetch(url);
 
+const res = await fetch(proxy(API));
 if(!res.ok) continue;
 
 const data = await res.json();
-
 if(!data || !data[0]) continue;
 
 const jogo = data[0];
 
-if(jogo.id === ultimoId) return;
+if(jogo.id === ultimoId || jogo.color === ultimaCor){
+tentando = false;
+return;
+}
 
 ultimoId = jogo.id;
+ultimaCor = jogo.color;
 
 let cor = jogo.color;
 
@@ -226,18 +235,22 @@ if(cor === 1) add("R");
 if(cor === 2) add("B");
 if(cor === 0) add("W");
 
-console.log("API OK:", url);
+console.log("✅ OK via proxy");
 
+tentando = false;
 return;
 
 }catch(e){
-console.log("Erro:", url);
+console.log("❌ erro proxy");
 }
 }
 
+tentando = false;
+console.log("🚫 nenhum proxy respondeu");
 }
 
-setInterval(buscarResultado, 4000);
+// velocidade
+setInterval(buscarResultado, 3000);
 
 // ===============================
 // MATRIX
@@ -275,4 +288,4 @@ setInterval(drawMatrix,50);
 </script>
 
 </body>
-    </html>
+</html>
