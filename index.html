@@ -81,7 +81,7 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 let seq=[], sinal=null, gale=0;
 let greens=0, losses=0, brancos=0;
 
-let ultimoId=null, ultimaCor=null, tentando=false;
+let ultimoId=null, tentando=false;
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
@@ -193,7 +193,7 @@ result.innerHTML="⏸️ AGUARDAR";
 }
 
 // ===============================
-// 🔥 PROXY SYSTEM PRO
+// 🔥 PROXY SYSTEM FINAL
 // ===============================
 
 const API = "https://blaze.com/api/roulette_games/recent";
@@ -221,13 +221,13 @@ if(!data || !data[0]) continue;
 
 const jogo = data[0];
 
-if(jogo.id === ultimoId || jogo.color === ultimaCor){
+// 🔥 CONTROLE CORRETO (ID)
+if(jogo.id === ultimoId){
 tentando = false;
 return;
 }
 
 ultimoId = jogo.id;
-ultimaCor = jogo.color;
 
 let cor = jogo.color;
 
@@ -235,7 +235,7 @@ if(cor === 1) add("R");
 if(cor === 2) add("B");
 if(cor === 0) add("W");
 
-console.log("✅ OK via proxy");
+console.log("✅ novo resultado");
 
 tentando = false;
 return;
@@ -246,10 +246,10 @@ console.log("❌ erro proxy");
 }
 
 tentando = false;
-console.log("🚫 nenhum proxy respondeu");
+console.log("🚫 falha geral");
 }
 
-// velocidade
+// velocidade ideal
 setInterval(buscarResultado, 3000);
 
 // ===============================
