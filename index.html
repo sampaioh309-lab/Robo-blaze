@@ -80,6 +80,7 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 
 let seq=[], sinal=null, gale=0;
 let greens=0, losses=0, brancos=0;
+let ultimoId = null;
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
@@ -96,7 +97,6 @@ brancosEl.innerText=brancos;
 
 function add(c){
 
-// evita duplicar resultado
 if(seq.length > 0 && seq[seq.length-1] === c) return;
 
 document.querySelectorAll("#linha span").forEach(e=>e.classList.remove("last-ball"));
@@ -192,36 +192,52 @@ result.innerHTML="⏸️ AGUARDAR";
 }
 
 // ===============================
-// 🔥 WEBSOCKET BLAZE
+// 🔥 MULTI API SYSTEM
 // ===============================
 
-let socket = new WebSocket("wss://api-v2.blaze.com/replication/?EIO=3&transport=websocket");
+const APIS = [
+"https://blaze.com/api/roulette_games/recent",
+"https://api.blaze.com/api/roulette_games/recent",
+"https://blaze.bet.br/api/roulette_games/recent"
+];
 
-socket.onopen = () => {
-    console.log("🟢 Conectado Blaze");
-    socket.send('40');
-    socket.send('42["join",{"channel":"blaze:double"}]');
-};
+async function buscarResultado(){
 
-socket.onmessage = (event) => {
+for(let url of APIS){
 
-    const data = event.data;
+try{
+const res = await fetch(url);
 
-    if (data.includes("double.spin")) {
-        try {
-            const json = JSON.parse(
-                data.replace('42["double.spin",', '').slice(0, -1)
-            );
+if(!res.ok) continue;
 
-            let cor = json.color;
+const data = await res.json();
 
-            if(cor === 1) add("R");
-            if(cor === 2) add("B");
-            if(cor === 0) add("W");
+if(!data || !data[0]) continue;
 
-        } catch(e){}
-    }
-};
+const jogo = data[0];
+
+if(jogo.id === ultimoId) return;
+
+ultimoId = jogo.id;
+
+let cor = jogo.color;
+
+if(cor === 1) add("R");
+if(cor === 2) add("B");
+if(cor === 0) add("W");
+
+console.log("API OK:", url);
+
+return;
+
+}catch(e){
+console.log("Erro:", url);
+}
+}
+
+}
+
+setInterval(buscarResultado, 4000);
 
 // ===============================
 // MATRIX
@@ -259,4 +275,4 @@ setInterval(drawMatrix,50);
 </script>
 
 </body>
-</html>
+    </html>
