@@ -78,14 +78,14 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 
 <script>
 
+/* VARIÁVEIS */
 let seq=[], sinal=null, gale=0;
 let greens=0, losses=0, brancos=0;
-
-let ultimoId=null;
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
 
+/* PLACAR */
 const greensEl=document.getElementById("greens");
 const lossesEl=document.getElementById("losses");
 const brancosEl=document.getElementById("brancos");
@@ -96,9 +96,8 @@ lossesEl.innerText=losses;
 brancosEl.innerText=brancos;
 }
 
+/* ADD PEDRA */
 function add(c){
-
-if(seq.length > 0 && seq[seq.length-1] === c) return;
 
 document.querySelectorAll("#linha span").forEach(e=>e.classList.remove("last-ball"));
 
@@ -116,9 +115,11 @@ brancos++;
 atualizarPlacar();
 }
 
+/* CHAMA ESTRATÉGIA */
 sinal ? validar(c) : analisar();
 }
 
+/* 🔥 NOVA ESTRATÉGIA (CORRIGIDA) */
 function analisar(){
 let ult3 = seq.slice(-3).join("");
 
@@ -144,6 +145,7 @@ return;
 }
 }
 
+/* VALIDAR */
 function validar(c){
 
 if(c==="W"){
@@ -173,6 +175,7 @@ resetar();
 }
 }
 
+/* RESET */
 function resetar(){
 setTimeout(()=>{
 sinal=null;
@@ -181,6 +184,7 @@ result.innerHTML="⏸️ AGUARDAR";
 },1200);
 }
 
+/* DESFAZER */
 function desfazer(){
 if(seq.length===0) return;
 
@@ -192,64 +196,7 @@ gale=0;
 result.innerHTML="⏸️ AGUARDAR";
 }
 
-// ===============================
-// 🔥 PROXY SYSTEM FINAL CORRIGIDO
-// ===============================
-
-const API = "https://blaze.com/api/roulette_games/recent";
-
-const PROXIES = [
-url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-url => `https://thingproxy.freeboard.io/fetch/${url}`
-];
-
-async function buscarResultado(){
-
-    for(let proxy of PROXIES){
-
-        try{
-
-            const res = await fetch(proxy(API));
-            if(!res.ok) continue;
-
-            const data = await res.json();
-            if(!data || !data[0]) continue;
-
-            const jogo = data[0];
-
-            // 🔥 CORREÇÃO FINAL (NÃO TRAVA MAIS)
-            if(jogo.id === ultimoId){
-                continue;
-            }
-
-            ultimoId = jogo.id;
-
-            let cor = jogo.color;
-
-            if(cor === 1) add("R");
-            if(cor === 2) add("B");
-            if(cor === 0) add("W");
-
-            console.log("✅ novo sinal");
-
-            return;
-
-        }catch(e){
-            continue;
-        }
-    }
-
-    console.log("⏳ aguardando novo resultado...");
-}
-
-// 🔥 LOOP CONTÍNUO
-setInterval(buscarResultado, 3000);
-
-// ===============================
-// MATRIX
-// ===============================
-
+/* MATRIX */
 const canvas=document.getElementById("matrix");
 const ctx=canvas.getContext("2d");
 
