@@ -81,7 +81,7 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 let seq=[], sinal=null, gale=0;
 let greens=0, losses=0, brancos=0;
 
-let ultimoId=null, tentando=false;
+let ultimoId=null;
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
@@ -193,7 +193,7 @@ result.innerHTML="⏸️ AGUARDAR";
 }
 
 // ===============================
-// 🔥 PROXY SYSTEM FINAL
+// 🔥 PROXY SYSTEM FINAL CORRIGIDO
 // ===============================
 
 const API = "https://blaze.com/api/roulette_games/recent";
@@ -206,50 +206,44 @@ url => `https://thingproxy.freeboard.io/fetch/${url}`
 
 async function buscarResultado(){
 
-if(tentando) return;
-tentando = true;
+    for(let proxy of PROXIES){
 
-for(let proxy of PROXIES){
+        try{
 
-try{
+            const res = await fetch(proxy(API));
+            if(!res.ok) continue;
 
-const res = await fetch(proxy(API));
-if(!res.ok) continue;
+            const data = await res.json();
+            if(!data || !data[0]) continue;
 
-const data = await res.json();
-if(!data || !data[0]) continue;
+            const jogo = data[0];
 
-const jogo = data[0];
+            // 🔥 CORREÇÃO FINAL (NÃO TRAVA MAIS)
+            if(jogo.id === ultimoId){
+                continue;
+            }
 
-// 🔥 CONTROLE CORRETO (ID)
-if(jogo.id === ultimoId){
-tentando = false;
-return;
+            ultimoId = jogo.id;
+
+            let cor = jogo.color;
+
+            if(cor === 1) add("R");
+            if(cor === 2) add("B");
+            if(cor === 0) add("W");
+
+            console.log("✅ novo sinal");
+
+            return;
+
+        }catch(e){
+            continue;
+        }
+    }
+
+    console.log("⏳ aguardando novo resultado...");
 }
 
-ultimoId = jogo.id;
-
-let cor = jogo.color;
-
-if(cor === 1) add("R");
-if(cor === 2) add("B");
-if(cor === 0) add("W");
-
-console.log("✅ novo resultado");
-
-tentando = false;
-return;
-
-}catch(e){
-console.log("❌ erro proxy");
-}
-}
-
-tentando = false;
-console.log("🚫 falha geral");
-}
-
-// velocidade ideal
+// 🔥 LOOP CONTÍNUO
 setInterval(buscarResultado, 3000);
 
 // ===============================
