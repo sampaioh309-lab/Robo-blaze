@@ -12,7 +12,18 @@ body{background:#020617;font-family:Arial;color:#e5e7eb;overflow:hidden}
 
 canvas{position:fixed;inset:0;z-index:0}
 
-#app{position:relative;z-index:1;max-width:420px;height:100vh;margin:auto;padding:6px;display:flex;flex-direction:column;gap:6px;text-align:center;}
+#app{
+position:relative;
+z-index:1;
+max-width:420px;
+height:100vh;
+margin:auto;
+padding:6px;
+display:flex;
+flex-direction:column;
+gap:6px;
+text-align:center;
+}
 
 .titulo{font-size:20px;font-weight:900;color:#ff0033}
 
@@ -34,11 +45,29 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 
 #result{min-height:50px;font-size:15px;font-weight:bold}
 
+/* PAINEL BRANCO RESPONSIVO */
+#brancoBox{
+position:fixed;
+bottom:10px;
+left:5px;
+right:5px;
+background:#020617;
+border:1px solid #facc15;
+padding:10px;
+border-radius:10px;
+font-size:13px;
+color:#facc15;
+display:none;
+max-height:120px;
+overflow-y:auto;
+}
+
 @keyframes pulseGlow{
 0%{transform:scale(1)}
 50%{transform:scale(1.2)}
 100%{transform:scale(1)}
 }
+
 .neon{animation:pulseGlow 0.8s infinite;font-weight:900}
 
 .green-big{color:#00ff55;font-size:34px}
@@ -73,19 +102,20 @@ button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10
 </div>
 
 <div id="result">⏸️ AGUARDAR</div>
+<div id="brancoBox"></div>
 
 </div>
 
 <script>
 
-/* VARIÁVEIS */
 let seq=[], sinal=null, gale=0;
 let greens=0, losses=0, brancos=0;
+let janelaBranco=null;
 
 const linha=document.getElementById("linha");
 const result=document.getElementById("result");
+const brancoBox=document.getElementById("brancoBox");
 
-/* PLACAR */
 const greensEl=document.getElementById("greens");
 const lossesEl=document.getElementById("losses");
 const brancosEl=document.getElementById("brancos");
@@ -96,7 +126,31 @@ lossesEl.innerText=losses;
 brancosEl.innerText=brancos;
 }
 
-/* ADD PEDRA */
+/* GERAR HORÁRIOS */
+function gerarHorariosBranco(){
+
+let agora=new Date();
+let base=new Date(agora.getTime()+5*60000);
+
+let horarios=[];
+
+for(let i=0;i<4;i++){
+let t=new Date(base.getTime()+i*3*60000);
+horarios.push(t);
+}
+
+/* janela ±1 min */
+let inicio=new Date(horarios[0].getTime()-60000);
+let fim=new Date(horarios[3].getTime()+60000);
+
+janelaBranco={
+inicio:inicio.getTime(),
+fim:fim.getTime()
+};
+
+return horarios.map(h=>`${h.getHours()}:${h.getMinutes().toString().padStart(2,'0')}`);
+}
+
 function add(c){
 
 document.querySelectorAll("#linha span").forEach(e=>e.classList.remove("last-ball"));
@@ -110,81 +164,136 @@ linha.scrollLeft=linha.scrollWidth;
 
 seq.push(c);
 
+/* 🔥 TRATAMENTO DO BRANCO */
 if(c==="W"){
+
+let agora = Date.now();
+
+/* 🟡 GREEN POR HORÁRIO */
+if(janelaBranco && agora >= janelaBranco.inicio && agora <= janelaBranco.fim){
+greens++;
+brancos++;
+
+result.innerHTML = "<div class='neon white-big'>⚪ GREEN (HORÁRIO)</div>";
+
+atualizarPlacar();
+janelaBranco = null;
+brancoBox.style.display = "none";
+
+sinal = null;
+gale = 0;
+return;
+}
+
+/* 🟢 GREEN POR PROTEÇÃO */
+if(sinal){
+validar("W");
+return;
+}
+
+/* ⚪ BRANCO NORMAL */
+let horarios = gerarHorariosBranco();
+
+brancoBox.style.display = "block";
+brancoBox.innerHTML = `
+⚪ <b>Possíveis Brancos</b><br>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;">
+${horarios.map(h=>`<div>🕒 ${h}</div>`).join("")}
+</div>
+`;
+
 brancos++;
 atualizarPlacar();
-}
-
-/* CHAMA ESTRATÉGIA */
-sinal ? validar(c) : analisar();
-}
-
-/* 🔥 NOVA ESTRATÉGIA (CORRIGIDA) */
-function analisar(){
-let ult3 = seq.slice(-3).join("");
-
-const padroes=[
-{p:"RRB",s:"R",inv:false},
-{p:"RBR",s:"R",inv:true},
-{p:"BRR",s:"B",inv:false},
-{p:"BBR",s:"B",inv:true},
-{p:"BRB",s:"B",inv:false},
-{p:"RBB",s:"R",inv:true}
-];
-
-for(let p of padroes){
-if(ult3 === p.p){
-
-sinal = p.inv 
-? (p.s === "R" ? "B" : "R") 
-: p.s;
-
-result.innerHTML=`📡 Apostar no ${sinal==="R"?"🔴":"⚫"}<br>🎯 Proteção: ⚪<br>♻️ Até G1`;
 return;
 }
+
+/* fluxo normal */
+if(sinal){
+validar(c);
+}else{
+analisar();
 }
 }
 
-/* VALIDAR */
+/* ESTRATÉGIA */
+function analisar(){
+
+if(seq.length < 6){
+result.innerHTML="⏸️ Aguardando dados...";
+return;
+}
+
+let entrada=seq[seq.length-6];
+
+if(entrada==="W"){
+result.innerHTML="⚠️ Entrada inválida";
+return;
+}
+
+if(seq.slice(-3).includes("W")){
+result.innerHTML="⚠️ Branco recente";
+return;
+}
+
+sinal=entrada;
+
+result.innerHTML=`
+📡 Padrão detectado<br>
+🎯 ${sinal==="R"?"🔴":"⚫"} + ⚪<br>
+♻️ Até G1
+`;
+}
+
+/* VALIDAÇÃO */
 function validar(c){
 
+/* 🔥 BRANCO = GREEN + BRANCO */
 if(c==="W"){
 greens++;
-result.innerHTML="<div class='neon white-big'>⚪ GREEN BRANCO</div>";
+brancos++;
+
+result.innerHTML="<div class='neon white-big'>⚪ GREEN</div>";
+
 atualizarPlacar();
-resetar();
+sinal=null;
+gale=0;
 return;
 }
 
+/* GREEN NORMAL */
 if(c===sinal){
 greens++;
 result.innerHTML="<div class='neon green-big'>🟢 GREEN</div>";
 atualizarPlacar();
-resetar();
+sinal=null;
+gale=0;
 return;
 }
 
+/* GALE */
 if(gale===0){
 gale=1;
 result.innerHTML="♻️ G1";
-}else{
+return;
+}
+
+/* LOSS */
 losses++;
 result.innerHTML="<div class='neon red-big'>❌ LOSS</div>";
 atualizarPlacar();
-resetar();
-}
-}
-
-/* RESET */
-function resetar(){
-setTimeout(()=>{
 sinal=null;
 gale=0;
-result.innerHTML="⏸️ AGUARDAR";
-},1200);
 }
 
-/* DESFAZER */
+/* limpar janela */
+setInterval(()=>{
+if(janelaBranco && Date.now()>janelaBranco.fim){
+janelaBranco=null;
+brancoBox.style.display="none";
+}
+},1000);
+
+/* desfazer */
 function desfazer(){
 if(seq.length===0) return;
 
@@ -224,6 +333,7 @@ drops[i]=0;
 drops[i]++;
 }
 }
+
 setInterval(drawMatrix,50);
 
 </script>
