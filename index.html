@@ -3,239 +3,244 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SISTEMA I.A - Blaze</title>
+<title>SISTEMA I.A - Double Blaze</title>
 
 <style>
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0}
+
 body{
 background:#020617;
-color:white;
 font-family:Arial;
-text-align:center;
-margin:0;
+color:#e5e7eb;
+overflow:hidden
 }
 
-/* LOGIN */
-#loginBox{
+canvas{
 position:fixed;
-inset:0;
-background:#020617;
+top:0;
+left:0;
+width:100%;
+height:100%;
+z-index:0
+}
+
+#app{
+position:relative;
+z-index:2;
+max-width:420px;
+height:100vh;
+margin:auto;
+padding:6px;
 display:flex;
 flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:10px;
+gap:6px;
+text-align:center
 }
 
-input,button{
-padding:10px;
-border:none;
-border-radius:6px;
+.titulo{font-size:20px;font-weight:900;color:#00aaff}
+.versao{font-size:13px;font-weight:900;color:#00aaff}
+
+#placar{
+display:flex;
+justify-content:space-between;
+font-size:11px
 }
 
-button{
-background:#22c55e;
-color:white;
-font-weight:bold;
-}
-
-/* APP */
-#app{display:none;padding:10px;}
+.green-neon{color:#22c55e}
+.red-neon{color:#ef4444}
+.white-neon{color:#facc15}
 
 #linha{
 display:flex;
-gap:5px;
-overflow:auto;
-margin:10px;
+gap:4px;
+overflow-x:auto;
+font-size:16px;
+padding:4px
 }
 
-.green{color:#00ff55;font-size:28px;font-weight:bold}
-.red{color:#ff0033;font-size:28px;font-weight:bold}
+#botoes{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:4px
+}
 
-/* BLOQUEIO */
-#bloqueio{
-display:none;
-position:fixed;
-inset:0;
-background:#020617;
-justify-content:center;
-align-items:center;
-flex-direction:column;
+button{
+padding:6px;
+font-size:11px;
+font-weight:bold;
+border:none;
+border-radius:8px
+}
+
+.red{background:#7f1d1d;color:#fff}
+.black{background:#020617;color:#fff;border:1px solid #555}
+.white{background:#fff;color:#020617}
+
+#result{
+min-height:40px;
+font-size:13px;
+font-weight:bold
+}
+
+.green-chamativo{
+font-size:28px;
+font-weight:900;
+color:#00ff55;
+text-shadow:0 0 20px #00ff55
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginBox">
-<h2>LOGIN</h2>
-<input id="login" placeholder="Login">
-<input id="senha" placeholder="Senha" type="password">
-<button onclick="logar()">Entrar</button>
-<p id="msg"></p>
-</div>
+<canvas id="matrix"></canvas>
 
-<!-- APP -->
 <div id="app">
 
-<h2>SISTEMA I.A</h2>
-
 <div>
-GREEN: <span id="greens">0</span> |
-LOSS: <span id="losses">0</span> |
-BRANCO: <span id="brancos">0</span>
+<div class="titulo">SISTEMA I.A</div>
+<div class="versao">V:10 PRO</div>
+<div id="hora"></div>
+</div>
+
+<div id="placar">
+<span class="green-neon">GREEN <b id="greens">0</b></span>
+<span class="red-neon">LOSS <b id="losses">0</b></span>
+<span class="white-neon">BRANCO <b id="brancos">0</b></span>
 </div>
 
 <div id="linha"></div>
 
-<div>
-<button onclick="add('R')">🔴</button>
-<button onclick="add('B')">⚫</button>
-<button onclick="add('W')">⚪</button>
+<div id="botoes">
+<button class="red" onclick="add('R')">🔴</button>
+<button class="black" onclick="add('B')">⚫</button>
+<button class="white" onclick="add('W')">⚪</button>
 </div>
 
 <div id="result">⏸️ AGUARDAR</div>
 
 </div>
 
-<!-- BLOQUEIO -->
-<div id="bloqueio">
-<h1 style="color:#00ff55">✅ TESTE FINALIZADO</h1>
-<p>Entre em contato com o suporte</p>
-<button onclick="location.reload()">Reiniciar</button>
-</div>
-
 <script>
 
-/* 🔐 USUÁRIOS */
-const usuarios={
+/* MATRIX */
+const canvas=document.getElementById("matrix")
+const ctx=canvas.getContext("2d")
+canvas.width=window.innerWidth
+canvas.height=window.innerHeight
 
-"cliente01":"Ax#91LmQ","cliente02":"Bp#73RtZ","cliente03":"Cr#64WpX","cliente04":"Ds#85QaM","cliente05":"Et#52LmK",
-"cliente06":"Fu#94RtP","cliente07":"Gv#61WpD","cliente08":"Hw#78QaS","cliente09":"Ix#43LmR","cliente10":"Jy#82RtV",
+const letters="01アイウエオ"
+const fontSize=14
+const columns=canvas.width/fontSize
+const drops=[]
 
-"cliente11":"Kz#55WpB","cliente12":"La#97QaN","cliente13":"Mb#68LmT","cliente14":"Nc#74RtQ","cliente15":"Od#59WpF",
-"cliente16":"Pe#83QaL","cliente17":"Qf#62LmX","cliente18":"Rg#91RtM","cliente19":"Sh#47WpK","cliente20":"Ti#76QaD",
+for(let x=0;x<columns;x++){drops[x]=1}
 
-"cliente21":"Uj#54LmP","cliente22":"Vk#89RtS","cliente23":"Wl#63WpZ","cliente24":"Xm#72QaA","cliente25":"Yn#95LmE",
-"cliente26":"Zo#58RtH","cliente27":"Ap#81WpJ","cliente28":"Bq#69QaU","cliente29":"Cr#44LmC","cliente30":"Ds#87RtY",
+function draw(){
+ctx.fillStyle="rgba(2,6,23,0.15)"
+ctx.fillRect(0,0,canvas.width,canvas.height)
 
-"cliente31":"Et#53WpN","cliente32":"Fu#90QaR","cliente33":"Gv#71LmW","cliente34":"Hw#65RtO","cliente35":"Ix#92WpI",
-"cliente36":"Jy#60QaX","cliente37":"Kz#84LmS","cliente38":"La#57RtG","cliente39":"Mb#73WpV","cliente40":"Nc#88QaB",
+ctx.fillStyle="#00aaff"
+ctx.font=fontSize+"px monospace"
 
-"cliente41":"Od#66LmF","cliente42":"Pe#79RtD","cliente43":"Qf#51WpT","cliente44":"Rg#93QaH","cliente45":"Sh#62LmZ",
-"cliente46":"Ti#85RtK","cliente47":"Uj#48WpM","cliente48":"Vk#97QaE","cliente49":"Wl#74LmA","cliente50":"Xm#69RtC"
+for(let i=0;i<drops.length;i++){
+const text=letters[Math.floor(Math.random()*letters.length)]
+ctx.fillText(text,i*fontSize,drops[i]*fontSize)
 
-};
-
-/* LOGIN */
-function logar(){
-let l=document.getElementById("login").value.trim();
-let s=document.getElementById("senha").value.trim();
-
-if(usuarios[l] && usuarios[l]===s){
-document.getElementById("loginBox").style.display="none";
-document.getElementById("app").style.display="block";
-}else{
-document.getElementById("msg").innerText="❌ Login inválido";
+if(drops[i]*fontSize>canvas.height && Math.random()>0.975){
+drops[i]=0
+}
+drops[i]++
 }
 }
+setInterval(draw,33)
 
 /* SISTEMA */
-let greens=0, losses=0, brancos=0;
-let limite=5;
 
-let seq=[], sinal=null, gale=0;
+const greensEl = document.getElementById("greens")
+const lossesEl = document.getElementById("losses")
+const brancosEl = document.getElementById("brancos")
+const linha = document.getElementById("linha")
+const result = document.getElementById("result")
 
-/* ELEMENTOS */
-const greensEl=document.getElementById("greens");
-const lossesEl=document.getElementById("losses");
-const brancosEl=document.getElementById("brancos");
-const linha=document.getElementById("linha");
-const result=document.getElementById("result");
+let greens=0
+let losses=0
+let brancos=0
 
-/* BLOQUEIO */
-function bloquear(){
-document.getElementById("app").style.display="none";
-document.getElementById("bloqueio").style.display="flex";
-}
+let seq=[]
+let sinal=null
+let gale=0
 
-/* ATUALIZAR */
-function atualizar(){
-greensEl.innerText=greens;
-lossesEl.innerText=losses;
-brancosEl.innerText=brancos;
-}
-
-/* ADD RESULTADO */
 function add(c){
 
-/* adiciona histórico */
-seq.push(c);
+seq.push(c)
 
-let el=document.createElement("span");
-el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
-linha.appendChild(el);
+let el=document.createElement("span")
+el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪"
+linha.appendChild(el)
+linha.scrollLeft=linha.scrollWidth
 
-/* validação */
 if(sinal){
 
 if(c==="W"){
-greens++; brancos++;
-result.innerHTML="<div class='green'>⚪ GREEN</div>";
-reset();
-check();
-return;
+greens++; brancos++
+greensEl.innerText=greens
+brancosEl.innerText=brancos
+result.innerHTML="<div class='green-chamativo'>⚪🟢 GREEN BRANCO</div>"
+resetar()
+return
 }
 
-if(c===sinal){
-greens++;
-result.innerHTML="<div class='green'>🟢 GREEN</div>";
-reset();
-check();
-return;
-}
+if(c === sinal){
+greens++
+greensEl.innerText=greens
+result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>"
+resetar()
+return
+}else{
 
 if(gale===0){
-gale=1;
-result.innerText="♻️ G1";
-return;
-}
-
-losses++;
-result.innerHTML="<div class='red'>❌ LOSS</div>";
-reset();
-return;
-}
-
-/* estratégia */
-if(seq.length>=6){
-
-let entrada = seq[seq.length-6];
-
-if(entrada!=="W" && !seq.slice(-3).includes("W")){
-sinal = entrada;
-result.innerHTML="📡 Entrar "+(sinal==="R"?"🔴":"⚫")+" + ⚪";
+gale=1
+result.innerHTML="♻️ ENTRAR G1"
+return
+}else{
+losses++
+lossesEl.innerText=losses
+result.innerHTML="❌ LOSS"
+resetar()
+return
 }
 
 }
+}
+
+if(seq.length<6) return
+
+let entrada = seq[seq.length-6]
+
+if(seq.slice(-3).includes("W")) return
+if(entrada==="W") return
+
+sinal=entrada
+
+result.innerHTML="📡 SINAL<br>Apostar "+(sinal==="R"?"🔴":"⚫")+"<br>♻️ Até G1<br>⚪ Proteção Branco"
 
 }
 
-/* CHECK BLOQUEIO */
-function check(){
-if(greens === limite){
-setTimeout(bloquear, 800);
-}
+function resetar(){
+sinal=null
+gale=0
 }
 
-/* RESET */
-function reset(){
-sinal=null;
-gale=0;
-atualizar();
+/* HORA */
+function atualizarHora(){
+let agora=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}))
+hora.innerText="🕒 "+agora.toLocaleTimeString("pt-BR")
 }
+setInterval(atualizarHora,1000)
 
 </script>
 
 </body>
-</html>
+  </html>
