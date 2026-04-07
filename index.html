@@ -235,39 +235,42 @@ sinal=null
 gale=0
 }
 
-/* 🔥 API COM PROXY (FUNCIONA NO GITHUB) */
-let ultimoId = null
+/* 🔥 API DEFINITIVA */
+let ultimoId = null;
 
 async function puxarBlaze(){
   try{
-    const res = await fetch("https://api.allorigins.win/raw?url=https://blaze.com/api/roulette_games/recent")
-    const data = await res.json()
+    const res = await fetch("https://cors.sh/https://blaze.com/api/roulette_games/recent",{
+      headers:{"x-cors-api-key":"temp"}
+    });
 
-    if(!data || !data.length) return
+    const data = await res.json();
 
-    const ultimo = data[0]
+    if(!data || !data.length) return;
 
-    if(ultimo.id === ultimoId) return
+    const ultimo = data[0];
 
-    ultimoId = ultimo.id
+    if(ultimo.id === ultimoId) return;
 
-    let cor = ""
+    ultimoId = ultimo.id;
 
-    if(ultimo.color === 0) cor = "W"
-    if(ultimo.color === 1) cor = "R"
-    if(ultimo.color === 2) cor = "B"
+    let cor = "";
 
-    console.log("Nova rodada:", cor)
+    if(ultimo.color === 0) cor = "W";
+    if(ultimo.color === 1) cor = "R";
+    if(ultimo.color === 2) cor = "B";
 
-    add(cor)
+    console.log("Nova rodada:", cor);
+
+    add(cor);
 
   }catch(e){
-    console.log("Erro API", e)
+    console.log("Erro API", e);
   }
 }
 
-/* 🔄 ATUALIZAÇÃO AUTOMÁTICA */
-setInterval(puxarBlaze, 2000)
+/* 🔄 LOOP */
+setInterval(puxarBlaze, 2000);
 
 /* HORA */
 function atualizarHora(){
@@ -279,4 +282,4 @@ setInterval(atualizarHora,1000)
 </script>
 
 </body>
-                                            </html>
+</html>
