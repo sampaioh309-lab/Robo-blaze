@@ -235,7 +235,7 @@ sinal=null
 gale=0
 }
 
-/* 🔥 API BLAZE */
+/* 🔥 API AUTOMÁTICA (CORRIGIDA) */
 let ultimoId = null
 
 async function puxarBlaze(){
@@ -243,9 +243,12 @@ async function puxarBlaze(){
     const res = await fetch("https://blaze.com/api/roulette_games/recent")
     const data = await res.json()
 
+    if(!data || !data.length) return
+
     const ultimo = data[0]
 
     if(ultimo.id === ultimoId) return
+
     ultimoId = ultimo.id
 
     let cor = ""
@@ -254,6 +257,8 @@ async function puxarBlaze(){
     if(ultimo.color === 1) cor = "R"
     if(ultimo.color === 2) cor = "B"
 
+    console.log("Nova rodada:", cor)
+
     add(cor)
 
   }catch(e){
@@ -261,8 +266,8 @@ async function puxarBlaze(){
   }
 }
 
-/* 🔄 ATIVA AUTOMÁTICO */
-setInterval(puxarBlaze, 5000)
+/* 🔄 LOOP RÁPIDO */
+setInterval(puxarBlaze, 2000)
 
 /* HORA */
 function atualizarHora(){
