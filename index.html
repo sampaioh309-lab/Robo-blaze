@@ -3,338 +3,237 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SISTEMA I.A - Double Blaze</title>
+<title>SISTEMA I.A - Blaze</title>
 
 <style>
-*{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0}
-body{background:#020617;font-family:Arial;color:#e5e7eb;overflow:hidden}
+body{
+background:#020617;
+color:white;
+font-family:Arial;
+text-align:center;
+margin:0;
+}
 
-canvas{position:fixed;inset:0;z-index:0}
-
-#app{
-position:relative;
-z-index:1;
-max-width:420px;
-height:100vh;
-margin:auto;
-padding:6px;
+/* LOGIN */
+#loginBox{
+position:fixed;
+inset:0;
+background:#020617;
 display:flex;
 flex-direction:column;
-gap:6px;
-text-align:center;
+justify-content:center;
+align-items:center;
+gap:10px;
 }
 
-.titulo{font-size:20px;font-weight:900;color:#ff0033}
-
-#placar{display:flex;justify-content:space-between;font-size:12px;}
-.green-neon{color:#22c55e}
-.red-neon{color:#ef4444}
-.white-neon{color:#facc15}
-
-#linha{display:flex;gap:4px;overflow-x:auto;font-size:18px;padding:4px;}
-#linha::-webkit-scrollbar{display:none}
-
-#botoes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-button{padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:10px;}
-
-.red{background:#7f1d1d;color:#fff}
-.black{background:#020617;color:#fff;border:1px solid #555}
-.white{background:#fff;color:#020617}
-.undo{background:#444;color:#fff}
-
-#result{min-height:50px;font-size:15px;font-weight:bold}
-
-/* PAINEL BRANCO RESPONSIVO */
-#brancoBox{
-position:fixed;
-bottom:10px;
-left:5px;
-right:5px;
-background:#020617;
-border:1px solid #facc15;
+input,button{
 padding:10px;
-border-radius:10px;
-font-size:13px;
-color:#facc15;
+border:none;
+border-radius:6px;
+}
+
+button{
+background:#22c55e;
+color:white;
+font-weight:bold;
+}
+
+/* APP */
+#app{display:none;padding:10px;}
+
+#linha{
+display:flex;
+gap:5px;
+overflow:auto;
+margin:10px;
+}
+
+.green{color:#00ff55;font-size:28px;font-weight:bold}
+.red{color:#ff0033;font-size:28px;font-weight:bold}
+
+/* BLOQUEIO */
+#bloqueio{
 display:none;
-max-height:120px;
-overflow-y:auto;
+position:fixed;
+inset:0;
+background:#020617;
+justify-content:center;
+align-items:center;
+flex-direction:column;
 }
-
-@keyframes pulseGlow{
-0%{transform:scale(1)}
-50%{transform:scale(1.2)}
-100%{transform:scale(1)}
-}
-
-.neon{animation:pulseGlow 0.8s infinite;font-weight:900}
-
-.green-big{color:#00ff55;font-size:34px}
-.red-big{color:#ff0033;font-size:34px}
-.white-big{color:#00ffcc;font-size:34px}
-
-.last-ball{animation:pulseGlow 0.6s infinite}
 </style>
 </head>
 
 <body>
 
-<canvas id="matrix"></canvas>
+<!-- LOGIN -->
+<div id="loginBox">
+<h2>LOGIN</h2>
+<input id="login" placeholder="Login">
+<input id="senha" placeholder="Senha" type="password">
+<button onclick="logar()">Entrar</button>
+<p id="msg"></p>
+</div>
 
+<!-- APP -->
 <div id="app">
 
-<div class="titulo">SISTEMA I.A</div>
+<h2>SISTEMA I.A</h2>
 
-<div id="placar">
-<span class="green-neon">GREEN <b id="greens">0</b></span>
-<span class="red-neon">LOSS <b id="losses">0</b></span>
-<span class="white-neon">BRANCO <b id="brancos">0</b></span>
+<div>
+GREEN: <span id="greens">0</span> |
+LOSS: <span id="losses">0</span> |
+BRANCO: <span id="brancos">0</span>
 </div>
 
 <div id="linha"></div>
 
-<div id="botoes">
-<button class="red" onclick="add('R')">🔴</button>
-<button class="black" onclick="add('B')">⚫</button>
-<button class="white" onclick="add('W')">⚪</button>
-<button class="undo" onclick="desfazer()">↩️</button>
+<div>
+<button onclick="add('R')">🔴</button>
+<button onclick="add('B')">⚫</button>
+<button onclick="add('W')">⚪</button>
 </div>
 
 <div id="result">⏸️ AGUARDAR</div>
-<div id="brancoBox"></div>
 
+</div>
+
+<!-- BLOQUEIO -->
+<div id="bloqueio">
+<h1 style="color:#00ff55">✅ TESTE FINALIZADO</h1>
+<p>Entre em contato com o suporte</p>
+<button onclick="location.reload()">Reiniciar</button>
 </div>
 
 <script>
 
-let seq=[], sinal=null, gale=0;
+/* 🔐 USUÁRIOS */
+const usuarios={
+
+"cliente01":"Ax#91LmQ","cliente02":"Bp#73RtZ","cliente03":"Cr#64WpX","cliente04":"Ds#85QaM","cliente05":"Et#52LmK",
+"cliente06":"Fu#94RtP","cliente07":"Gv#61WpD","cliente08":"Hw#78QaS","cliente09":"Ix#43LmR","cliente10":"Jy#82RtV",
+
+"cliente11":"Kz#55WpB","cliente12":"La#97QaN","cliente13":"Mb#68LmT","cliente14":"Nc#74RtQ","cliente15":"Od#59WpF",
+"cliente16":"Pe#83QaL","cliente17":"Qf#62LmX","cliente18":"Rg#91RtM","cliente19":"Sh#47WpK","cliente20":"Ti#76QaD",
+
+"cliente21":"Uj#54LmP","cliente22":"Vk#89RtS","cliente23":"Wl#63WpZ","cliente24":"Xm#72QaA","cliente25":"Yn#95LmE",
+"cliente26":"Zo#58RtH","cliente27":"Ap#81WpJ","cliente28":"Bq#69QaU","cliente29":"Cr#44LmC","cliente30":"Ds#87RtY",
+
+"cliente31":"Et#53WpN","cliente32":"Fu#90QaR","cliente33":"Gv#71LmW","cliente34":"Hw#65RtO","cliente35":"Ix#92WpI",
+"cliente36":"Jy#60QaX","cliente37":"Kz#84LmS","cliente38":"La#57RtG","cliente39":"Mb#73WpV","cliente40":"Nc#88QaB",
+
+"cliente41":"Od#66LmF","cliente42":"Pe#79RtD","cliente43":"Qf#51WpT","cliente44":"Rg#93QaH","cliente45":"Sh#62LmZ",
+"cliente46":"Ti#85RtK","cliente47":"Uj#48WpM","cliente48":"Vk#97QaE","cliente49":"Wl#74LmA","cliente50":"Xm#69RtC"
+
+};
+
+/* LOGIN */
+function logar(){
+let l=document.getElementById("login").value.trim();
+let s=document.getElementById("senha").value.trim();
+
+if(usuarios[l] && usuarios[l]===s){
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
+}else{
+document.getElementById("msg").innerText="❌ Login inválido";
+}
+}
+
+/* SISTEMA */
 let greens=0, losses=0, brancos=0;
-let janelaBranco=null;
+let limite=5;
 
-const linha=document.getElementById("linha");
-const result=document.getElementById("result");
-const brancoBox=document.getElementById("brancoBox");
+let seq=[], sinal=null, gale=0;
 
+/* ELEMENTOS */
 const greensEl=document.getElementById("greens");
 const lossesEl=document.getElementById("losses");
 const brancosEl=document.getElementById("brancos");
+const linha=document.getElementById("linha");
+const result=document.getElementById("result");
 
-function atualizarPlacar(){
+/* BLOQUEIO */
+function bloquear(){
+document.getElementById("app").style.display="none";
+document.getElementById("bloqueio").style.display="flex";
+}
+
+/* ATUALIZAR */
+function atualizar(){
 greensEl.innerText=greens;
 lossesEl.innerText=losses;
 brancosEl.innerText=brancos;
 }
 
-/* GERAR HORÁRIOS */
-function gerarHorariosBranco(){
-
-let agora=new Date();
-let base=new Date(agora.getTime()+5*60000);
-
-let horarios=[];
-
-for(let i=0;i<4;i++){
-let t=new Date(base.getTime()+i*3*60000);
-horarios.push(t);
-}
-
-/* janela ±1 min */
-let inicio=new Date(horarios[0].getTime()-60000);
-let fim=new Date(horarios[3].getTime()+60000);
-
-janelaBranco={
-inicio:inicio.getTime(),
-fim:fim.getTime()
-};
-
-return horarios.map(h=>`${h.getHours()}:${h.getMinutes().toString().padStart(2,'0')}`);
-}
-
+/* ADD RESULTADO */
 function add(c){
 
-document.querySelectorAll("#linha span").forEach(e=>e.classList.remove("last-ball"));
-
-const el=document.createElement("span");
-el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
-el.classList.add("last-ball");
-
-linha.appendChild(el);
-linha.scrollLeft=linha.scrollWidth;
-
+/* adiciona histórico */
 seq.push(c);
 
-/* 🔥 TRATAMENTO DO BRANCO */
-if(c==="W"){
+let el=document.createElement("span");
+el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪";
+linha.appendChild(el);
 
-let agora = Date.now();
-
-/* 🟡 GREEN POR HORÁRIO */
-if(janelaBranco && agora >= janelaBranco.inicio && agora <= janelaBranco.fim){
-greens++;
-brancos++;
-
-result.innerHTML = "<div class='neon white-big'>⚪ GREEN (HORÁRIO)</div>";
-
-atualizarPlacar();
-janelaBranco = null;
-brancoBox.style.display = "none";
-
-sinal = null;
-gale = 0;
-return;
-}
-
-/* 🟢 GREEN POR PROTEÇÃO */
+/* validação */
 if(sinal){
-validar("W");
-return;
-}
 
-/* ⚪ BRANCO NORMAL */
-let horarios = gerarHorariosBranco();
-
-brancoBox.style.display = "block";
-brancoBox.innerHTML = `
-⚪ <b>Possíveis Brancos</b><br>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;">
-${horarios.map(h=>`<div>🕒 ${h}</div>`).join("")}
-</div>
-`;
-
-brancos++;
-atualizarPlacar();
-return;
-}
-
-/* fluxo normal */
-if(sinal){
-validar(c);
-}else{
-analisar();
-}
-}
-
-/* ESTRATÉGIA */
-function analisar(){
-
-if(seq.length < 6){
-result.innerHTML="⏸️ Aguardando dados...";
-return;
-}
-
-let entrada=seq[seq.length-6];
-
-if(entrada==="W"){
-result.innerHTML="⚠️ Entrada inválida";
-return;
-}
-
-if(seq.slice(-3).includes("W")){
-result.innerHTML="⚠️ Branco recente";
-return;
-}
-
-sinal=entrada;
-
-result.innerHTML=`
-📡 Padrão detectado<br>
-🎯 ${sinal==="R"?"🔴":"⚫"} + ⚪<br>
-♻️ Até G1
-`;
-}
-
-/* VALIDAÇÃO */
-function validar(c){
-
-/* 🔥 BRANCO = GREEN + BRANCO */
 if(c==="W"){
-greens++;
-brancos++;
-
-result.innerHTML="<div class='neon white-big'>⚪ GREEN</div>";
-
-atualizarPlacar();
-sinal=null;
-gale=0;
+greens++; brancos++;
+result.innerHTML="<div class='green'>⚪ GREEN</div>";
+reset();
+check();
 return;
 }
 
-/* GREEN NORMAL */
 if(c===sinal){
 greens++;
-result.innerHTML="<div class='neon green-big'>🟢 GREEN</div>";
-atualizarPlacar();
-sinal=null;
-gale=0;
+result.innerHTML="<div class='green'>🟢 GREEN</div>";
+reset();
+check();
 return;
 }
 
-/* GALE */
 if(gale===0){
 gale=1;
-result.innerHTML="♻️ G1";
+result.innerText="♻️ G1";
 return;
 }
 
-/* LOSS */
 losses++;
-result.innerHTML="<div class='neon red-big'>❌ LOSS</div>";
-atualizarPlacar();
+result.innerHTML="<div class='red'>❌ LOSS</div>";
+reset();
+return;
+}
+
+/* estratégia */
+if(seq.length>=6){
+
+let entrada = seq[seq.length-6];
+
+if(entrada!=="W" && !seq.slice(-3).includes("W")){
+sinal = entrada;
+result.innerHTML="📡 Entrar "+(sinal==="R"?"🔴":"⚫")+" + ⚪";
+}
+
+}
+
+}
+
+/* CHECK BLOQUEIO */
+function check(){
+if(greens === limite){
+setTimeout(bloquear, 800);
+}
+}
+
+/* RESET */
+function reset(){
 sinal=null;
 gale=0;
+atualizar();
 }
-
-/* limpar janela */
-setInterval(()=>{
-if(janelaBranco && Date.now()>janelaBranco.fim){
-janelaBranco=null;
-brancoBox.style.display="none";
-}
-},1000);
-
-/* desfazer */
-function desfazer(){
-if(seq.length===0) return;
-
-seq.pop();
-linha.removeChild(linha.lastChild);
-
-sinal=null;
-gale=0;
-result.innerHTML="⏸️ AGUARDAR";
-}
-
-/* MATRIX */
-const canvas=document.getElementById("matrix");
-const ctx=canvas.getContext("2d");
-
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
-
-const letters="01アイウエオ";
-const fontSize=14;
-let drops=Array(Math.floor(window.innerWidth/fontSize)).fill(1);
-
-function drawMatrix(){
-ctx.fillStyle="rgba(2,6,23,0.3)";
-ctx.fillRect(0,0,canvas.width,canvas.height);
-
-ctx.fillStyle="#ff0033";
-ctx.font=fontSize+"px monospace";
-
-for(let i=0;i<drops.length;i++){
-let text=letters[Math.random()*letters.length|0];
-ctx.fillText(text,i*fontSize,drops[i]*fontSize);
-
-if(drops[i]*fontSize>canvas.height && Math.random()>0.975){
-drops[i]=0;
-}
-drops[i]++;
-}
-}
-
-setInterval(drawMatrix,50);
 
 </script>
 
