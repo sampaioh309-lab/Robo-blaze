@@ -235,12 +235,12 @@ sinal=null
 gale=0
 }
 
-/* 🔥 API AUTOMÁTICA (CORRIGIDA) */
+/* 🔥 API COM PROXY (FUNCIONA NO GITHUB) */
 let ultimoId = null
 
 async function puxarBlaze(){
   try{
-    const res = await fetch("https://blaze.com/api/roulette_games/recent")
+    const res = await fetch("https://api.allorigins.win/raw?url=https://blaze.com/api/roulette_games/recent")
     const data = await res.json()
 
     if(!data || !data.length) return
@@ -266,7 +266,7 @@ async function puxarBlaze(){
   }
 }
 
-/* 🔄 LOOP RÁPIDO */
+/* 🔄 ATUALIZAÇÃO AUTOMÁTICA */
 setInterval(puxarBlaze, 2000)
 
 /* HORA */
@@ -279,4 +279,4 @@ setInterval(atualizarHora,1000)
 </script>
 
 </body>
-</html>
+                                            </html>
