@@ -174,8 +174,6 @@ let gale=0
 
 function add(c){
 
-if(!c) return
-
 seq.push(c)
 
 let el=document.createElement("span")
@@ -234,43 +232,6 @@ function resetar(){
 sinal=null
 gale=0
 }
-
-/* 🔥 API DEFINITIVA */
-let ultimoId = null;
-
-async function puxarBlaze(){
-  try{
-    const res = await fetch("https://cors.sh/https://blaze.com/api/roulette_games/recent",{
-      headers:{"x-cors-api-key":"temp"}
-    });
-
-    const data = await res.json();
-
-    if(!data || !data.length) return;
-
-    const ultimo = data[0];
-
-    if(ultimo.id === ultimoId) return;
-
-    ultimoId = ultimo.id;
-
-    let cor = "";
-
-    if(ultimo.color === 0) cor = "W";
-    if(ultimo.color === 1) cor = "R";
-    if(ultimo.color === 2) cor = "B";
-
-    console.log("Nova rodada:", cor);
-
-    add(cor);
-
-  }catch(e){
-    console.log("Erro API", e);
-  }
-}
-
-/* 🔄 LOOP */
-setInterval(puxarBlaze, 2000);
 
 /* HORA */
 function atualizarHora(){
