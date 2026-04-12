@@ -41,16 +41,6 @@ text-align:center
 .titulo{font-size:20px;font-weight:900;color:#00aaff}
 .versao{font-size:13px;font-weight:900;color:#00aaff}
 
-#placar{
-display:flex;
-justify-content:space-between;
-font-size:11px
-}
-
-.green-neon{color:#22c55e}
-.red-neon{color:#ef4444}
-.white-neon{color:#facc15}
-
 #linha{
 display:flex;
 gap:4px;
@@ -82,19 +72,13 @@ text-shadow:0 0 20px #00ff55
 
 <div>
 <div class="titulo">SISTEMA I.A</div>
-<div class="versao">V:10 PRO AUTO</div>
+<div class="versao">AUTO PRO</div>
 <div id="hora"></div>
-</div>
-
-<div id="placar">
-<span class="green-neon">AUTO 🔄</span>
-<span class="white-neon">BLAZE</span>
-<span class="red-neon">IA ATIVA</span>
 </div>
 
 <div id="linha"></div>
 
-<div id="result">⏸️ INICIANDO...</div>
+<div id="result">⏸️ CONECTANDO...</div>
 
 </div>
 
@@ -137,12 +121,14 @@ setInterval(draw,33)
 const result = document.getElementById("result")
 const linha = document.getElementById("linha")
 
+// 🔥 MUITO IMPORTANTE → TROQUE PELO SEU IP SE PRECISAR
+const API = "http://127.0.0.1:3000/api/signal"
+
 async function atualizarSinal(){
   try{
-    const res = await fetch("http://127.0.0.1:3000/api/signal")
+    const res = await fetch(API)
     const data = await res.json()
 
-    // limpar histórico
     linha.innerHTML=""
 
     data.last.forEach(r=>{
@@ -155,7 +141,6 @@ async function atualizarSinal(){
       linha.appendChild(el)
     })
 
-    // mostrar sinal
     if(data.signal){
 
       let cor = data.signal.color === "red" ? "🔴" : "⚫"
@@ -177,8 +162,7 @@ async function atualizarSinal(){
   }
 }
 
-// loop automático
-setInterval(atualizarSinal, 3000)
+setInterval(atualizarSinal,3000)
 atualizarSinal()
 
 /* HORA */
