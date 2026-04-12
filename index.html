@@ -41,6 +41,16 @@ text-align:center
 .titulo{font-size:20px;font-weight:900;color:#00aaff}
 .versao{font-size:13px;font-weight:900;color:#00aaff}
 
+#placar{
+display:flex;
+justify-content:space-between;
+font-size:11px
+}
+
+.green-neon{color:#22c55e}
+.red-neon{color:#ef4444}
+.white-neon{color:#facc15}
+
 #linha{
 display:flex;
 gap:4px;
@@ -49,14 +59,32 @@ font-size:16px;
 padding:4px
 }
 
+#botoes{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:4px
+}
+
+button{
+padding:6px;
+font-size:11px;
+font-weight:bold;
+border:none;
+border-radius:8px
+}
+
+.red{background:#7f1d1d;color:#fff}
+.black{background:#020617;color:#fff;border:1px solid #555}
+.white{background:#fff;color:#020617}
+
 #result{
-min-height:60px;
-font-size:14px;
+min-height:40px;
+font-size:13px;
 font-weight:bold
 }
 
 .green-chamativo{
-font-size:26px;
+font-size:28px;
 font-weight:900;
 color:#00ff55;
 text-shadow:0 0 20px #00ff55
@@ -72,13 +100,25 @@ text-shadow:0 0 20px #00ff55
 
 <div>
 <div class="titulo">SISTEMA I.A</div>
-<div class="versao">AUTO PRO</div>
+<div class="versao">V:10 PRO</div>
 <div id="hora"></div>
+</div>
+
+<div id="placar">
+<span class="green-neon">GREEN <b id="greens">0</b></span>
+<span class="red-neon">LOSS <b id="losses">0</b></span>
+<span class="white-neon">BRANCO <b id="brancos">0</b></span>
 </div>
 
 <div id="linha"></div>
 
-<div id="result">⏸️ CONECTANDO...</div>
+<div id="botoes">
+<button class="red" onclick="add('R')">🔴</button>
+<button class="black" onclick="add('B')">⚫</button>
+<button class="white" onclick="add('W')">⚪</button>
+</div>
+
+<div id="result">⏸️ AGUARDAR</div>
 
 </div>
 
@@ -116,54 +156,82 @@ drops[i]++
 }
 setInterval(draw,33)
 
-/* SISTEMA AUTOMÁTICO */
+/* SISTEMA */
 
-const result = document.getElementById("result")
+const greensEl = document.getElementById("greens")
+const lossesEl = document.getElementById("losses")
+const brancosEl = document.getElementById("brancos")
 const linha = document.getElementById("linha")
+const result = document.getElementById("result")
 
-// 🔥 MUITO IMPORTANTE → TROQUE PELO SEU IP SE PRECISAR
-const API = "http://127.0.0.1:3000/api/signal"
+let greens=0
+let losses=0
+let brancos=0
 
-async function atualizarSinal(){
-  try{
-    const res = await fetch(API)
-    const data = await res.json()
+let seq=[]
+let sinal=null
+let gale=0
 
-    linha.innerHTML=""
+function add(c){
 
-    data.last.forEach(r=>{
-      let el=document.createElement("span")
+seq.push(c)
 
-      if(r.roll === 0) el.innerText="⚪"
-      else if(r.roll <= 7) el.innerText="🔴"
-      else el.innerText="⚫"
+let el=document.createElement("span")
+el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪"
+linha.appendChild(el)
+linha.scrollLeft=linha.scrollWidth
 
-      linha.appendChild(el)
-    })
+if(sinal){
 
-    if(data.signal){
-
-      let cor = data.signal.color === "red" ? "🔴" : "⚫"
-
-      result.innerHTML = `
-      <div class="green-chamativo">
-        📡 ENTRADA ${cor}<br>
-        ♻️ ATÉ G1<br>
-        ⚪ PROTEÇÃO
-      </div>
-      `
-
-    } else {
-      result.innerHTML = "⏸️ AGUARDANDO PADRÃO..."
-    }
-
-  }catch(e){
-    result.innerHTML = "❌ ERRO CONEXÃO"
-  }
+if(c==="W"){
+greens++; brancos++
+greensEl.innerText=greens
+brancosEl.innerText=brancos
+result.innerHTML="<div class='green-chamativo'>⚪🟢 GREEN BRANCO</div>"
+resetar()
+return
 }
 
-setInterval(atualizarSinal,3000)
-atualizarSinal()
+if(c === sinal){
+greens++
+greensEl.innerText=greens
+result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>"
+resetar()
+return
+}else{
+
+if(gale===0){
+gale=1
+result.innerHTML="♻️ ENTRAR G1"
+return
+}else{
+losses++
+lossesEl.innerText=losses
+result.innerHTML="❌ LOSS"
+resetar()
+return
+}
+
+}
+}
+
+if(seq.length<6) return
+
+let entrada = seq[seq.length-6]
+
+if(seq.slice(-3).includes("W")) return
+if(entrada==="W") return
+
+sinal=entrada
+
+result.innerHTML="📡 SINAL<br>Apostar "+(sinal==="R"?"🔴":"⚫")+"<br>♻️ Até G1<br>⚪ Proteção Branco"
+
+}
+
+function resetar(){
+sinal=null
+gale=0
+}
 
 /* HORA */
 function atualizarHora(){
