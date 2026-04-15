@@ -25,6 +25,56 @@ height:100%;
 z-index:0
 }
 
+/* SETUP */
+#setup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#020617;
+z-index:10;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:15px;
+}
+
+.stepper{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.stepper button{
+padding:8px 12px;
+font-size:16px;
+font-weight:bold;
+border:none;
+border-radius:8px;
+background:#00aaff;
+color:#fff;
+}
+
+.stepper span{
+font-size:20px;
+font-weight:bold;
+width:50px;
+text-align:center;
+}
+
+#setup button{
+padding:10px 20px;
+font-size:16px;
+font-weight:bold;
+border:none;
+border-radius:10px;
+background:#00aaff;
+color:#fff;
+}
+
+/* APP */
 #app{
 position:relative;
 z-index:2;
@@ -96,6 +146,28 @@ text-shadow:0 0 20px #00ff55
 
 <canvas id="matrix"></canvas>
 
+<!-- SETUP -->
+<div id="setup">
+<h2>CONFIGURAR STOP</h2>
+
+<label>Stop Green</label>
+<div class="stepper">
+<button onclick="alterar('green', -1)">◀</button>
+<span id="greenValor">5</span>
+<button onclick="alterar('green', 1)">▶</button>
+</div>
+
+<label>Stop Loss</label>
+<div class="stepper">
+<button onclick="alterar('loss', -1)">◀</button>
+<span id="lossValor">3</span>
+<button onclick="alterar('loss', 1)">▶</button>
+</div>
+
+<button onclick="iniciarSistema()">🚀 INICIAR</button>
+</div>
+
+<!-- APP -->
 <div id="app">
 
 <div>
@@ -156,7 +228,27 @@ drops[i]++
 }
 setInterval(draw,33)
 
+/* CONFIG */
+let configGreen = 5
+let configLoss = 3
+
+function alterar(tipo, valor){
+if(tipo==="green"){
+configGreen += valor
+if(configGreen < 1) configGreen = 1
+greenValor.innerText = configGreen
+}
+if(tipo==="loss"){
+configLoss += valor
+if(configLoss < 1) configLoss = 1
+lossValor.innerText = configLoss
+}
+}
+
 /* SISTEMA */
+let STOP_GREEN = 0
+let STOP_LOSS = 0
+let travado = false
 
 const greensEl = document.getElementById("greens")
 const lossesEl = document.getElementById("losses")
@@ -172,7 +264,33 @@ let seq=[]
 let sinal=null
 let gale=0
 
+function iniciarSistema(){
+STOP_GREEN = configGreen
+STOP_LOSS = configLoss
+document.getElementById("setup").style.display="none"
+}
+
+/* STOP */
+function verificarStop(){
+
+if(greens >= STOP_GREEN){
+travado = true
+result.innerHTML = "🟢 STOP GREEN BATIDO"
+return true
+}
+
+if(losses >= STOP_LOSS){
+travado = true
+result.innerHTML = "🔴 STOP LOSS BATIDO"
+return true
+}
+
+return false
+}
+
 function add(c){
+
+if(travado) return
 
 seq.push(c)
 
@@ -181,15 +299,13 @@ el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪"
 linha.appendChild(el)
 linha.scrollLeft=linha.scrollWidth
 
-// =============================
-// VALIDAÇÃO DO SINAL
-// =============================
 if(sinal){
 
 if(c==="W"){
 greens++; brancos++
 greensEl.innerText=greens
 brancosEl.innerText=brancos
+if(verificarStop()) return
 result.innerHTML="<div class='green-chamativo'>⚪🟢 GREEN BRANCO</div>"
 resetar()
 return
@@ -198,6 +314,7 @@ return
 if(c === sinal){
 greens++
 greensEl.innerText=greens
+if(verificarStop()) return
 result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>"
 resetar()
 return
@@ -210,6 +327,7 @@ return
 }else{
 losses++
 lossesEl.innerText=losses
+if(verificarStop()) return
 result.innerHTML="❌ LOSS"
 resetar()
 return
@@ -218,23 +336,14 @@ return
 }
 }
 
-// =============================
-// ANÁLISE
-// =============================
-
 if(seq.length < 6) return
 
-// 🔵 SUA ESTRATÉGIA NORMAL
 let entrada = seq[seq.length-6]
 
 if(seq.slice(-3).includes("W")) return
 if(entrada==="W") return
 
 sinal = entrada
-
-// =============================
-// 🔥 PADRÃO DO BRANCO
-// =============================
 
 let ultimos10 = seq.slice(-10)
 let ultimos6 = seq.slice(-6)
@@ -255,12 +364,7 @@ let finalLinha =
 
 let padraoBranco = gatilhoBranco && (zigzag || repeticaoLonga || finalLinha)
 
-// 🔥 SINAL FORTE (SÓ SE OS 2 BATEM)
 let brancoForte = sinal && padraoBranco
-
-// =============================
-// RESULTADO FINAL
-// =============================
 
 result.innerHTML =
   "📡 SINAL<br>Apostar " +
@@ -285,4 +389,4 @@ setInterval(atualizarHora,1000)
 </script>
 
 </body>
-</html>
+  </html>
