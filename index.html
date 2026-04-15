@@ -25,56 +25,6 @@ height:100%;
 z-index:0
 }
 
-/* SETUP */
-#setup{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#020617;
-z-index:10;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:15px;
-}
-
-.stepper{
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.stepper button{
-padding:8px 12px;
-font-size:16px;
-font-weight:bold;
-border:none;
-border-radius:8px;
-background:#00aaff;
-color:#fff;
-}
-
-.stepper span{
-font-size:20px;
-font-weight:bold;
-width:50px;
-text-align:center;
-}
-
-#setup button{
-padding:10px 20px;
-font-size:16px;
-font-weight:bold;
-border:none;
-border-radius:10px;
-background:#00aaff;
-color:#fff;
-}
-
-/* APP */
 #app{
 position:relative;
 z-index:2;
@@ -139,6 +89,58 @@ font-weight:900;
 color:#00ff55;
 text-shadow:0 0 20px #00ff55
 }
+
+/* TELAS */
+#desempenho,#lista{
+position:fixed;
+top:0;left:0;width:100%;height:100%;
+background:#020617;
+z-index:999;
+display:none;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+overflow:auto
+}
+
+/* GRID */
+.grade{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:8px;
+padding:10px;
+width:100%;
+}
+
+/* CARD GRANDE */
+.card{
+border-radius:10px;
+height:70px;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+}
+
+.card.red{background:#ef4444;color:#fff}
+.card.black{background:#111;color:#fff}
+.card.white{background:#f1f1f1;color:#000}
+
+.hora{
+width:100%;
+text-align:center;
+font-size:13px;
+font-weight:900;
+padding:4px 0;
+background:rgba(0,0,0,0.3);
+}
+
+.cor{
+flex:1;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:18px;
+}
 </style>
 </head>
 
@@ -146,28 +148,6 @@ text-shadow:0 0 20px #00ff55
 
 <canvas id="matrix"></canvas>
 
-<!-- SETUP -->
-<div id="setup">
-<h2>CONFIGURAR STOP</h2>
-
-<label>Stop Green</label>
-<div class="stepper">
-<button onclick="alterar('green', -1)">◀</button>
-<span id="greenValor">5</span>
-<button onclick="alterar('green', 1)">▶</button>
-</div>
-
-<label>Stop Loss</label>
-<div class="stepper">
-<button onclick="alterar('loss', -1)">◀</button>
-<span id="lossValor">3</span>
-<button onclick="alterar('loss', 1)">▶</button>
-</div>
-
-<button onclick="iniciarSistema()">🚀 INICIAR</button>
-</div>
-
-<!-- APP -->
 <div id="app">
 
 <div>
@@ -192,6 +172,27 @@ text-shadow:0 0 20px #00ff55
 
 <div id="result">⏸️ AGUARDAR</div>
 
+<button onclick="abrirDesempenho()">📊 Meu Desempenho</button>
+
+</div>
+
+<!-- DESEMPENHO -->
+<div id="desempenho">
+<h2>📊 DESEMPENHO</h2>
+
+<button onclick="verLista('sg')">🟢 Green SG</button>
+<button onclick="verLista('g1')">♻️ Green G1</button>
+<button onclick="verLista('loss')">🔴 Loss</button>
+<button onclick="verLista('white')">⚪ Brancos</button>
+
+<button onclick="fecharDesempenho()">Fechar</button>
+</div>
+
+<!-- LISTA -->
+<div id="lista">
+<h2 id="tituloLista"></h2>
+<div id="conteudoLista" class="grade"></div>
+<button onclick="fecharLista()">Voltar</button>
 </div>
 
 <script>
@@ -228,28 +229,7 @@ drops[i]++
 }
 setInterval(draw,33)
 
-/* CONFIG */
-let configGreen = 5
-let configLoss = 3
-
-function alterar(tipo, valor){
-if(tipo==="green"){
-configGreen += valor
-if(configGreen < 1) configGreen = 1
-greenValor.innerText = configGreen
-}
-if(tipo==="loss"){
-configLoss += valor
-if(configLoss < 1) configLoss = 1
-lossValor.innerText = configLoss
-}
-}
-
 /* SISTEMA */
-let STOP_GREEN = 0
-let STOP_LOSS = 0
-let travado = false
-
 const greensEl = document.getElementById("greens")
 const lossesEl = document.getElementById("losses")
 const brancosEl = document.getElementById("brancos")
@@ -264,33 +244,45 @@ let seq=[]
 let sinal=null
 let gale=0
 
-function iniciarSistema(){
-STOP_GREEN = configGreen
-STOP_LOSS = configLoss
-document.getElementById("setup").style.display="none"
+let historico=[]
+
+function salvarDados(){
+localStorage.setItem("roboBlaze", JSON.stringify({
+greens,losses,brancos,historico
+}))
 }
 
-/* STOP */
-function verificarStop(){
+function carregarDados(){
+let d=JSON.parse(localStorage.getItem("roboBlaze"))
+if(!d)return
 
-if(greens >= STOP_GREEN){
-travado = true
-result.innerHTML = "🟢 STOP GREEN BATIDO"
-return true
+greens=d.greens||0
+losses=d.losses||0
+brancos=d.brancos||0
+historico=d.historico||[]
+
+greensEl.innerText=greens
+lossesEl.innerText=losses
+brancosEl.innerText=brancos
 }
 
-if(losses >= STOP_LOSS){
-travado = true
-result.innerHTML = "🔴 STOP LOSS BATIDO"
-return true
-}
+carregarDados()
 
-return false
+/* limpa linha sempre */
+seq=[]
+linha.innerHTML=""
+
+function registrar(tipo,cor,galeUsado){
+historico.push({
+tipo,
+cor,
+hora:new Date().toLocaleTimeString("pt-BR"),
+gale:galeUsado
+})
+salvarDados()
 }
 
 function add(c){
-
-if(travado) return
 
 seq.push(c)
 
@@ -305,7 +297,9 @@ if(c==="W"){
 greens++; brancos++
 greensEl.innerText=greens
 brancosEl.innerText=brancos
-if(verificarStop()) return
+
+registrar("green","W",gale)
+
 result.innerHTML="<div class='green-chamativo'>⚪🟢 GREEN BRANCO</div>"
 resetar()
 return
@@ -314,7 +308,9 @@ return
 if(c === sinal){
 greens++
 greensEl.innerText=greens
-if(verificarStop()) return
+
+registrar("green",sinal,gale)
+
 result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>"
 resetar()
 return
@@ -327,7 +323,9 @@ return
 }else{
 losses++
 lossesEl.innerText=losses
-if(verificarStop()) return
+
+registrar("loss",sinal,gale)
+
 result.innerHTML="❌ LOSS"
 resetar()
 return
@@ -336,6 +334,7 @@ return
 }
 }
 
+// 🔥 SUA LÓGICA ORIGINAL DE SINAL
 if(seq.length < 6) return
 
 let entrada = seq[seq.length-6]
@@ -355,28 +354,66 @@ let gatilhoBranco = ultimos10.includes("W")
 let zigzag = ultimos6.join("") === "RBRBRB" || ultimos6.join("") === "BRBRBR"
 
 let repeticaoLonga =
-  ultimos5.every(c => c === "R") || ultimos5.every(c => c === "B")
+ultimos5.every(c => c === "R") || ultimos5.every(c => c === "B")
 
 let finalLinha =
-  ultimos4[0] === ultimos4[1] &&
-  ultimos4[1] === ultimos4[2] &&
-  ultimos4[2] !== ultimos4[3]
+ultimos4[0] === ultimos4[1] &&
+ultimos4[1] === ultimos4[2] &&
+ultimos4[2] !== ultimos4[3]
 
 let padraoBranco = gatilhoBranco && (zigzag || repeticaoLonga || finalLinha)
 
 let brancoForte = sinal && padraoBranco
 
 result.innerHTML =
-  "📡 SINAL<br>Apostar " +
-  (sinal==="R"?"🔴":"⚫") +
-  "<br>♻️ Até G1<br>⚪ Proteção Branco" +
-  (brancoForte ? " <b>(SINAL FORTE)</b>" : "")
+"📡 SINAL<br>Apostar " +
+(sinal==="R"?"🔴":"⚫") +
+"<br>♻️ Até G1<br>⚪ Proteção Branco" +
+(brancoForte ? " <b>(SINAL FORTE)</b>" : "")
 
 }
 
 function resetar(){
 sinal=null
 gale=0
+}
+
+/* DESEMPENHO */
+function abrirDesempenho(){desempenho.style.display="flex"}
+function fecharDesempenho(){desempenho.style.display="none"}
+
+function verLista(tipo){
+
+desempenho.style.display="none"
+lista.style.display="flex"
+
+let listaFiltrada=historico.filter(h=>{
+if(tipo==="sg") return h.tipo==="green" && h.gale===0 && h.cor!=="W"
+if(tipo==="g1") return h.tipo==="green" && h.gale===1 && h.cor!=="W"
+if(tipo==="loss") return h.tipo==="loss"
+if(tipo==="white") return h.cor==="W"
+})
+
+conteudoLista.innerHTML=""
+
+listaFiltrada.reverse().forEach(i=>{
+
+let corClasse = i.cor==="R"?"red":i.cor==="B"?"black":"white"
+
+conteudoLista.innerHTML += `
+<div class="card ${corClasse}">
+<div class="hora">${i.hora}</div>
+<div class="cor">${i.cor==="R"?"🔴":i.cor==="B"?"⚫":"⚪"}</div>
+</div>
+`
+})
+
+tituloLista.innerText=tipo.toUpperCase()
+}
+
+function fecharLista(){
+lista.style.display="none"
+desempenho.style.display="flex"
 }
 
 /* HORA */
@@ -389,4 +426,4 @@ setInterval(atualizarHora,1000)
 </script>
 
 </body>
-  </html>
+</html>
