@@ -181,6 +181,9 @@ el.innerText=c==="R"?"🔴":c==="B"?"⚫":"⚪"
 linha.appendChild(el)
 linha.scrollLeft=linha.scrollWidth
 
+// =============================
+// VALIDAÇÃO DO SINAL
+// =============================
 if(sinal){
 
 if(c==="W"){
@@ -215,16 +218,55 @@ return
 }
 }
 
-if(seq.length<6) return
+// =============================
+// ANÁLISE
+// =============================
 
+if(seq.length < 6) return
+
+// 🔵 SUA ESTRATÉGIA NORMAL
 let entrada = seq[seq.length-6]
 
 if(seq.slice(-3).includes("W")) return
 if(entrada==="W") return
 
-sinal=entrada
+sinal = entrada
 
-result.innerHTML="📡 SINAL<br>Apostar "+(sinal==="R"?"🔴":"⚫")+"<br>♻️ Até G1<br>⚪ Proteção Branco"
+// =============================
+// 🔥 PADRÃO DO BRANCO
+// =============================
+
+let ultimos10 = seq.slice(-10)
+let ultimos6 = seq.slice(-6)
+let ultimos5 = seq.slice(-5)
+let ultimos4 = seq.slice(-4)
+
+let gatilhoBranco = ultimos10.includes("W")
+
+let zigzag = ultimos6.join("") === "RBRBRB" || ultimos6.join("") === "BRBRBR"
+
+let repeticaoLonga =
+  ultimos5.every(c => c === "R") || ultimos5.every(c => c === "B")
+
+let finalLinha =
+  ultimos4[0] === ultimos4[1] &&
+  ultimos4[1] === ultimos4[2] &&
+  ultimos4[2] !== ultimos4[3]
+
+let padraoBranco = gatilhoBranco && (zigzag || repeticaoLonga || finalLinha)
+
+// 🔥 SINAL FORTE (SÓ SE OS 2 BATEM)
+let brancoForte = sinal && padraoBranco
+
+// =============================
+// RESULTADO FINAL
+// =============================
+
+result.innerHTML =
+  "📡 SINAL<br>Apostar " +
+  (sinal==="R"?"🔴":"⚫") +
+  "<br>♻️ Até G1<br>⚪ Proteção Branco" +
+  (brancoForte ? " <b>(SINAL FORTE)</b>" : "")
 
 }
 
