@@ -44,7 +44,8 @@ text-align:center
 #placar{
 display:flex;
 justify-content:space-between;
-font-size:11px
+font-size:11px;
+align-items:center
 }
 
 .green-neon{color:#22c55e}
@@ -70,7 +71,8 @@ padding:6px;
 font-size:11px;
 font-weight:bold;
 border:none;
-border-radius:8px
+border-radius:8px;
+cursor:pointer;
 }
 
 .red{background:#7f1d1d;color:#fff}
@@ -90,7 +92,6 @@ color:#00ff55;
 text-shadow:0 0 20px #00ff55
 }
 
-/* TELAS */
 #desempenho,#lista{
 position:fixed;
 top:0;left:0;width:100%;height:100%;
@@ -103,43 +104,12 @@ justify-content:center;
 overflow:auto
 }
 
-/* GRID */
 .grade{
 display:grid;
 grid-template-columns:repeat(5,1fr);
 gap:8px;
 padding:10px;
 width:100%;
-}
-
-/* CARD GRANDE */
-.card{
-border-radius:10px;
-height:70px;
-display:flex;
-flex-direction:column;
-overflow:hidden;
-}
-
-.card.red{background:#ef4444;color:#fff}
-.card.black{background:#111;color:#fff}
-.card.white{background:#f1f1f1;color:#000}
-
-.hora{
-width:100%;
-text-align:center;
-font-size:13px;
-font-weight:900;
-padding:4px 0;
-background:rgba(0,0,0,0.3);
-}
-
-.cor{
-flex:1;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:18px;
 }
 </style>
 </head>
@@ -160,6 +130,10 @@ font-size:18px;
 <span class="green-neon">GREEN <b id="greens">0</b></span>
 <span class="red-neon">LOSS <b id="losses">0</b></span>
 <span class="white-neon">BRANCO <b id="brancos">0</b></span>
+
+<button onclick="resetarPlacar()" style="padding:2px 6px;font-size:9px;background:#111;color:#fff;border:1px solid #333;border-radius:5px">
+Reset
+</button>
 </div>
 
 <div id="linha"></div>
@@ -180,10 +154,11 @@ font-size:18px;
 <div id="desempenho">
 <h2>📊 DESEMPENHO</h2>
 
-<button onclick="verLista('sg')">🟢 Green SG</button>
-<button onclick="verLista('g1')">♻️ Green G1</button>
-<button onclick="verLista('loss')">🔴 Loss</button>
-<button onclick="verLista('white')">⚪ Brancos</button>
+<button onclick="verLista()">📅 Ver Histórico</button>
+
+<button onclick="resetarDesempenho()" style="margin-top:10px;background:#7f1d1d;color:#fff">
+🗑 Resetar Desempenho
+</button>
 
 <button onclick="fecharDesempenho()">Fechar</button>
 </div>
@@ -230,32 +205,23 @@ drops[i]++
 setInterval(draw,33)
 
 /* SISTEMA */
-const greensEl = document.getElementById("greens")
-const lossesEl = document.getElementById("losses")
-const brancosEl = document.getElementById("brancos")
-const linha = document.getElementById("linha")
-const result = document.getElementById("result")
+const greensEl=document.getElementById("greens")
+const lossesEl=document.getElementById("losses")
+const brancosEl=document.getElementById("brancos")
+const linha=document.getElementById("linha")
+const result=document.getElementById("result")
 
-let greens=0
-let losses=0
-let brancos=0
-
-let seq=[]
-let sinal=null
-let gale=0
-
+let greens=0,losses=0,brancos=0
+let seq=[],sinal=null,gale=0
 let historico=[]
 
 function salvarDados(){
-localStorage.setItem("roboBlaze", JSON.stringify({
-greens,losses,brancos,historico
-}))
+localStorage.setItem("roboBlaze", JSON.stringify({greens,losses,brancos,historico}))
 }
 
 function carregarDados(){
 let d=JSON.parse(localStorage.getItem("roboBlaze"))
 if(!d)return
-
 greens=d.greens||0
 losses=d.losses||0
 brancos=d.brancos||0
@@ -265,18 +231,30 @@ greensEl.innerText=greens
 lossesEl.innerText=losses
 brancosEl.innerText=brancos
 }
-
 carregarDados()
 
-/* limpa linha sempre */
-seq=[]
-linha.innerHTML=""
+function resetarPlacar(){
+greens=0;losses=0;brancos=0
+greensEl.innerText=0
+lossesEl.innerText=0
+brancosEl.innerText=0
+salvarDados()
+}
+
+function resetarDesempenho(){
+if(!confirm("Apagar desempenho?")) return
+historico=[]
+salvarDados()
+conteudoLista.innerHTML=""
+}
 
 function registrar(tipo,cor,galeUsado){
+let agora=new Date()
 historico.push({
 tipo,
 cor,
-hora:new Date().toLocaleTimeString("pt-BR"),
+hora:agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+data:agora.toLocaleDateString("pt-BR"),
 gale:galeUsado
 })
 salvarDados()
@@ -297,20 +275,16 @@ if(c==="W"){
 greens++; brancos++
 greensEl.innerText=greens
 brancosEl.innerText=brancos
-
 registrar("green","W",gale)
-
 result.innerHTML="<div class='green-chamativo'>⚪🟢 GREEN BRANCO</div>"
 resetar()
 return
 }
 
-if(c === sinal){
+if(c===sinal){
 greens++
 greensEl.innerText=greens
-
 registrar("green",sinal,gale)
-
 result.innerHTML="<div class='green-chamativo'>🟢 GREEN</div>"
 resetar()
 return
@@ -323,9 +297,7 @@ return
 }else{
 losses++
 lossesEl.innerText=losses
-
 registrar("loss",sinal,gale)
-
 result.innerHTML="❌ LOSS"
 resetar()
 return
@@ -334,92 +306,92 @@ return
 }
 }
 
-// 🔥 SUA LÓGICA ORIGINAL DE SINAL
-if(seq.length < 6) return
+if(seq.length<6)return
 
-let entrada = seq[seq.length-6]
+let entrada=seq[seq.length-6]
 
 if(seq.slice(-3).includes("W")) return
 if(entrada==="W") return
 
-sinal = entrada
+sinal=entrada
 
-let ultimos10 = seq.slice(-10)
-let ultimos6 = seq.slice(-6)
-let ultimos5 = seq.slice(-5)
-let ultimos4 = seq.slice(-4)
-
-let gatilhoBranco = ultimos10.includes("W")
-
-let zigzag = ultimos6.join("") === "RBRBRB" || ultimos6.join("") === "BRBRBR"
-
-let repeticaoLonga =
-ultimos5.every(c => c === "R") || ultimos5.every(c => c === "B")
-
-let finalLinha =
-ultimos4[0] === ultimos4[1] &&
-ultimos4[1] === ultimos4[2] &&
-ultimos4[2] !== ultimos4[3]
-
-let padraoBranco = gatilhoBranco && (zigzag || repeticaoLonga || finalLinha)
-
-let brancoForte = sinal && padraoBranco
-
-result.innerHTML =
-"📡 SINAL<br>Apostar " +
-(sinal==="R"?"🔴":"⚫") +
-"<br>♻️ Até G1<br>⚪ Proteção Branco" +
-(brancoForte ? " <b>(SINAL FORTE)</b>" : "")
-
+result.innerHTML="📡 SINAL<br>Apostar "+(sinal==="R"?"🔴":"⚫")+"<br>♻️ Até G1<br>⚪ Proteção Branco"
 }
 
-function resetar(){
-sinal=null
-gale=0
-}
+function resetar(){sinal=null;gale=0}
 
-/* DESEMPENHO */
-function abrirDesempenho(){desempenho.style.display="flex"}
-function fecharDesempenho(){desempenho.style.display="none"}
-
-function verLista(tipo){
+/* HISTÓRICO QUADRADINHO */
+function verLista(){
 
 desempenho.style.display="none"
 lista.style.display="flex"
-
-let listaFiltrada=historico.filter(h=>{
-if(tipo==="sg") return h.tipo==="green" && h.gale===0 && h.cor!=="W"
-if(tipo==="g1") return h.tipo==="green" && h.gale===1 && h.cor!=="W"
-if(tipo==="loss") return h.tipo==="loss"
-if(tipo==="white") return h.cor==="W"
-})
-
 conteudoLista.innerHTML=""
 
-listaFiltrada.reverse().forEach(i=>{
+let agrupado={}
 
-let corClasse = i.cor==="R"?"red":i.cor==="B"?"black":"white"
+historico.forEach(h=>{
+let data=h.data||"Antigos"
+if(!agrupado[data]) agrupado[data]=[]
+agrupado[data].push(h)
+})
 
-conteudoLista.innerHTML += `
-<div class="card ${corClasse}">
-<div class="hora">${i.hora}</div>
-<div class="cor">${i.cor==="R"?"🔴":i.cor==="B"?"⚫":"⚪"}</div>
+Object.keys(agrupado).reverse().forEach(data=>{
+
+let itens=agrupado[data]
+
+function montar(lista,titulo){
+
+if(lista.length===0)return""
+
+return `
+<div style="margin-top:10px">
+<b>${titulo} ${lista.length}</b>
+
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:5px">
+
+${lista.map(i=>{
+
+let bg=i.cor==="R"?"#ef4444":i.cor==="B"?"#111":"#f1f1f1"
+let cor=i.cor==="W"?"#000":"#fff"
+let emoji=i.cor==="R"?"🔴":i.cor==="B"?"⚫":"⚪"
+
+return `
+<div style="border-radius:8px;background:${bg};color:${cor};padding:6px;text-align:center;font-size:11px;font-weight:bold">
+<div>${i.hora}</div>
+<div style="font-size:16px">${emoji}</div>
+</div>
+`
+
+}).join("")}
+
+</div>
+</div>
+`
+}
+
+conteudoLista.innerHTML+=`
+<div style="grid-column:span 5;padding:10px;border-bottom:1px solid #333;text-align:left">
+
+<div style="color:#00aaff;font-weight:bold;margin-bottom:5px">${data}</div>
+
+${montar(itens.filter(h=>h.tipo==="green"&&h.cor!=="W"),"🟢 GREEN")}
+${montar(itens.filter(h=>h.tipo==="loss"),"🔴 LOSS")}
+${montar(itens.filter(h=>h.cor==="W"),"⚪ BRANCO")}
+
 </div>
 `
 })
 
-tituloLista.innerText=tipo.toUpperCase()
+tituloLista.innerText="HISTÓRICO"
 }
 
-function fecharLista(){
-lista.style.display="none"
-desempenho.style.display="flex"
-}
+function abrirDesempenho(){desempenho.style.display="flex"}
+function fecharDesempenho(){desempenho.style.display="none"}
+function fecharLista(){lista.style.display="none";desempenho.style.display="flex"}
 
-/* HORA */
 function atualizarHora(){
 let agora=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Sao_Paulo"}))
-hora.innerText="🕒 "+agora.toLocaleTimeString("pt-BR")
+hora.innerText="🕒 "+agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
 }
 setInterval(atualizarHora,1000)
 
