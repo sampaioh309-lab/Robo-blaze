@@ -25,7 +25,7 @@ height:100%;
 z-index:0
 }
 
-/* AVISO DE EXPIRAÇÃO */
+/* AVISO DE EXPIRAÇÃO AUTOMÁTICO */
 .aviso-expiracao {
 position: relative;
 z-index:10;
@@ -155,8 +155,8 @@ width:100%;
 <canvas id="matrix"></canvas>
 
 <div class="aviso-expiracao">
-<span>⚠️ DETECTADO: Sua licença atual vai se expirar em 15 dias!</span>
-<button class="btn-suporte" onclick="window.open('https://wa.me/5511987401582?text=Ol%C3%A1%2C%20meu%20rob%C3%B4%20vai%20expirar%20em%2015%20dias%20e%20gostaria%20de%20adquirir%20o%20plano%20da%20nova%20vers%C3%A3o%20PRO%21', '_blank')">Adquirir Nova Versão PRO 🚀</button>
+<span id="texto-aviso">Calculando licença...</span>
+<button class="btn-suporte" id="btn-suporte" onclick="irParaSuporte()">Adquirir Nova Versão PRO 🚀</button>
 </div>
 
 <div id="app">
@@ -243,6 +243,42 @@ drops[i]++
 }
 setInterval(draw,33)
 
+/* CONTROLE DE EXPIRAÇÃO AUTOMÁTICA */
+let urlSuporte = "https://wa.me/5511987401582";
+
+function gerenciarExpiracao() {
+    // Defina a data final da licença aqui (Ano, Mês-1, Dia) -> Junho é mês 5 no JS (0=Jan, 1=Fev...)
+    const dataExpiracao = new Date(2026, 5, 29); 
+    const hoje = new Date();
+    
+    // Zera as horas para calcular apenas a diferença de dias inteiros
+    hoje.setHours(0,0,0,0);
+    dataExpiracao.setHours(0,0,0,0);
+    
+    const diferencaTempo = dataExpiracao.getTime() - hoje.getTime();
+    const diasRestantes = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
+    
+    const txtAviso = document.getElementById("texto-aviso");
+    const btnSuporte = document.getElementById("btn-suporte");
+    
+    if (diasRestantes > 0) {
+        txtAviso.innerText = `⚠️ DETECTADO: Sua licença atual vai se expirar em ${diasRestantes} dias!`;
+        urlSuporte = `https://wa.me/5511987401582?text=Ol%C3%A1%2C%20meu%20rob%C3%B4%20vai%20expirar%20em%20${diasRestantes}%20dias%20e%20gostaria%20de%20adquirir%20o%20plano%20da%20nova%20vers%C3%A3o%20PRO%21`;
+    } else {
+        txtAviso.innerText = "❌ SUA LICENÇA EXPIROU! REATIVE O SEU ACESSO.";
+        btnSuporte.innerText = "RENOVAR LICENÇA AGORA 🔐";
+        urlSuporte = "https://wa.me/5511987401582?text=Ol%C3%A1%2C%20minha%20licen%C3%A7a%20expirou%20e%20quero%20renovar%20para%20a%20nova%20vers%C3%A3o%20PRO%21";
+    }
+}
+
+function irParaSuporte() {
+    window.open(urlSuporte, '_blank');
+}
+
+// Executa o cálculo ao carregar a página
+gerenciarExpiracao();
+
+
 /* SISTEMA */
 const greensEl=document.getElementById("greens")
 const lossesEl=document.getElementById("losses")
@@ -291,7 +327,7 @@ function registrar(tipo,cor,galeUsado){
 let agora=new Date()
 historico.push({
 tipo: tipo,
-cor: cor,
+cor: col,
 hora: agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
 data: agora.toLocaleDateString("pt-BR"),
 gale: galeUsado
