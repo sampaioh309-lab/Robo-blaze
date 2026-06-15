@@ -25,11 +25,47 @@ height:100%;
 z-index:0
 }
 
+/* AVISO DE EXPIRAÇÃO */
+.aviso-expiracao {
+position: relative;
+z-index:10;
+background: linear-gradient(90deg, #7f1d1d, #b91c1c);
+color: #ffffff;
+text-align: center;
+padding: 8px 4px;
+font-size: 11px;
+font-weight: bold;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 4px;
+border-bottom: 2px solid #ef4444;
+box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-suporte {
+background: #facc15;
+color: #020617;
+border: none;
+padding: 4px 10px;
+font-size: 10px;
+font-weight: 900;
+border-radius: 4px;
+cursor: pointer;
+text-transform: uppercase;
+transition: transform 0.2s;
+}
+
+.btn-suporte:hover {
+transform: scale(1.05);
+}
+
 #app{
 position:relative;
 z-index:2;
 max-width:420px;
-height:100vh;
+height:calc(100vh - 55px);
 margin:auto;
 padding:6px;
 display:flex;
@@ -118,6 +154,11 @@ width:100%;
 
 <canvas id="matrix"></canvas>
 
+<div class="aviso-expiracao">
+<span>⚠️ DETECTADO: Sua licença atual vai se expirar em 15 dias!</span>
+<button class="btn-suporte" onclick="window.open('https://wa.me/5511987401582?text=Ol%C3%A1%2C%20meu%20rob%C3%B4%20vai%20expirar%20em%2015%20dias%20e%20gostaria%20de%20adquirir%20o%20plano%20da%20nova%20vers%C3%A3o%20PRO%21', '_blank')">Adquirir Nova Versão PRO 🚀</button>
+</div>
+
 <div id="app">
 
 <div>
@@ -150,7 +191,6 @@ Reset
 
 </div>
 
-<!-- DESEMPENHO -->
 <div id="desempenho">
 <h2>📊 DESEMPENHO</h2>
 
@@ -163,7 +203,6 @@ Reset
 <button onclick="fecharDesempenho()">Fechar</button>
 </div>
 
-<!-- LISTA -->
 <div id="lista">
 <h2 id="tituloLista"></h2>
 <div id="conteudoLista" class="grade"></div>
@@ -251,11 +290,11 @@ conteudoLista.innerHTML=""
 function registrar(tipo,cor,galeUsado){
 let agora=new Date()
 historico.push({
-tipo,
-cor,
-hora:agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
-data:agora.toLocaleDateString("pt-BR"),
-gale:galeUsado
+tipo: tipo,
+cor: cor,
+hora: agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+data: agora.toLocaleDateString("pt-BR"),
+gale: galeUsado
 })
 salvarDados()
 }
